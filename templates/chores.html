@@ -12,6 +12,7 @@
                 <th style="padding: 10px; text-align: left;">Description</th>
                 <th style="padding: 10px; text-align: center;">Priority</th>
                 <th style="padding: 10px; text-align: center;">Status</th>
+                <th style="padding: 10px; text-align: center;">Actions</th>
             </tr>
             {% for chore in chores %}
                 <tr style="border-bottom: 1px solid #ddd;">
@@ -24,6 +25,12 @@
                         {% else %}
                             ⬜ Pending
                         {% endif %}
+                    </td>
+                    <td style="padding: 10px; text-align: center;">
+                        <a href="/edit/{{ chore.id }}" style="color: #667eea; text-decoration: none; margin-right: 10px;">Edit</a>
+                        <form method="POST" action="/delete/{{ chore.id }}" style="display: inline;">
+                            <button type="submit" style="background: none; border: none; color: #e74c3c; cursor: pointer; text-decoration: underline;" onclick="return confirm('Are you sure?')">Delete</button>
+                        </form>
                     </td>
                 </tr>
             {% endfor %}
