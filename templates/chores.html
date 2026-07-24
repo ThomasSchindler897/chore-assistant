@@ -4,10 +4,31 @@
 
 {% block content %}
     <h1>Your Chores</h1>
-    <p>Here are your chores for today:</p>
-    <ul>
-        <li>Wash dishes</li>
-        <li>Vacuum living room</li>
-        <li>Do laundry</li>
-    </ul>
+    
+    {% if chores %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #f0f0f0; border-bottom: 2px solid #333;">
+                <th style="padding: 10px; text-align: left;">Name</th>
+                <th style="padding: 10px; text-align: left;">Description</th>
+                <th style="padding: 10px; text-align: center;">Priority</th>
+                <th style="padding: 10px; text-align: center;">Status</th>
+            </tr>
+            {% for chore in chores %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px;">{{ chore.name }}</td>
+                    <td style="padding: 10px;">{{ chore.description }}</td>
+                    <td style="padding: 10px; text-align: center;">{{ chore.priority }}/5</td>
+                    <td style="padding: 10px; text-align: center;">
+                        {% if chore.completed %}
+                            ✅ Done
+                        {% else %}
+                            ⬜ Pending
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No chores yet! Add some to get started.</p>
+    {% endif %}
 {% endblock %}

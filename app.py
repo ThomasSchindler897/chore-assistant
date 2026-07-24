@@ -16,7 +16,8 @@ def home():
 
 @app.route('/chores')
 def chores():
-    return render_template('chores.html')
+    all_chores = Chore.query.all()
+    return render_template('chores.html', chores=all_chores)
 
 @app.route('/about')
 def about():
