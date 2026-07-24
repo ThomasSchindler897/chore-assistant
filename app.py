@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-from flask_sqlalchemy import SQLAlchemy
+from models import db, Chore
 
 app = Flask(__name__)
 
@@ -7,19 +7,8 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chores.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize database
-db = SQLAlchemy(app)
-
-# Define the Chore model (table)
-class Chore(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String(500))
-    priority = db.Column(db.Integer, default=1)  # 1-5
-    completed = db.Column(db.Boolean, default=False)
-
-    def __repr__(self):
-        return f'<Chore {self.name}>'
+# Initialize database with app
+db.init_app(app)
 
 @app.route('/')
 def home():
