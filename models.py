@@ -3,6 +3,15 @@ from datetime import datetime, timedelta
 
 db = SQLAlchemy()
 
+class Completion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    chore_id = db.Column(db.Integer, db.ForeignKey('chore.id'), nullable=False)
+    completed_at = db.Column(db.DateTime, default=datetime.now)
+    chore = db.relationship('Chore', backref='completions')
+    
+    def __repr__(self):
+        return f'<Completion Chore {self.chore_id} at {self.completed_at}>'
+
 class Chore(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -163,6 +172,67 @@ class Chore(db.Model):
             return "One-time task"
         
         return "Unknown"
+
+    def get_completion_count(self):
+        """Get total number of times this chore has been completed"""
+        return len(self.completions)
+
+    def get_completion_percentage(self):
+        """Calculate completion percentage based on frequency"""
+        from datetime import datetime, timedelta
+    
+        if self.frequency == 'daily':
+            # Count completions in last 30 days
+            thirty_days_ago = datetime.now() - timedelta(days=30)
+            recent = [c for c in self.completions if c.completed_at >= thirty_days_ago]
+            return int((len(recent) / 30) * 100) if recent else 0
+    
+        elif self.frequency == 'weekly':
+            # Count completions in last 12 weeks
+            twelve_weeks_ago = datetime.now() - timedelta(weeks=12)
+            recent = [c for c in self.completions if c.completed_at >= twelve_weeks_ago]
+            return int((len(recent) / 12) * 100) if recent else 0
+    
+        elif self.frequency == 'monthly':
+            # Count completions in last 12 months
+            twelve_months_ago = datetime.now() - timedelta(days=365)
+            recent = [c for c in self.completions if c.completed_at >= twelve_months_ago]
+            return int((len(recent) / 12) * 100) if recent else 0
+    
+        return 0
+
+    def get_current_streak(self):
+        """Calculate current completion streak"""
+        if not self.completions:
+            return 0
+    
+        from datetime import datetime, timedelta
+    
+        # Sort completions by date (newest first)
+        sorted_completions = sorted(self.completions, key=lambda x: x.completed_at, reverse=True)
+    
+        if self.frequency == 'daily':
+            streak = 0
+            expected_date = datetime.now().date()
+        
+            for completion in sorted_completions:
+                completion_date = completion.completed_at.date()
+                if completion_date == expected_date:
+                    streak += 1
+                    expected_date -= timedelta(days=1)
+                else:
+                    break
+        
+            return streak
+    
+        elif self.frequency == 'weekly':
+            # Check if most recent completion was within last week
+            most_recent = sorted_completions[0]
+            if (datetime.now() - most_recent.completed_at).days <= 7:
+                return len([c for c in sorted_completions if (datetime.now() - c.completed_at).days <= 7])
+            return 0
+    
+        return 0
 
     def __repr__(self):
         return f'<Chore {self.name}>'
