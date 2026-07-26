@@ -3,6 +3,94 @@
 {% block title %}Home - Chore Assistant{% endblock %}
 
 {% block content %}
-    <h1>Welcome to Chore Assistant</h1>
-    <p>Manage your household chores efficiently!</p>
+    <h1>Today's Chores</h1>
+    
+    <p style="font-size: 16px; color: #666; margin-bottom: 20px;">
+        📅 <strong>Today is {{ today_date }}</strong>
+    </p>
+    
+    <!-- TODAY'S CHORES TABLE -->
+    {% if chores %}
+        <h2 style="margin-top: 30px; margin-bottom: 15px; font-size: 18px;">
+            You have <strong style="color: #667eea;">{{ chores|length }}</strong> chore(s) due today:
+        </h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #f0f0f0; border-bottom: 2px solid #333;">
+                <th style="padding: 10px; text-align: left;">Chore</th>
+                <th style="padding: 10px; text-align: left;">Description</th>
+                <th style="padding: 10px; text-align: center;">Priority</th>
+                <th style="padding: 10px; text-align: center;">Status</th>
+            </tr>
+            {% for chore in chores %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px;">{{ chore.name }}</td>
+                    <td style="padding: 10px;">{{ chore.description }}</td>
+                    <td style="padding: 10px; text-align: center;">{{ chore.priority }}/5</td>
+                    <td style="padding: 10px; text-align: center;">
+                        <form method="POST" action="/toggle/{{ chore.id }}" style="display: inline;">
+                            <input type="checkbox" onchange="this.form.submit()" style="width: 18px; height: 18px; cursor: pointer;">
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p style="color: #666;">No chores due today yet!</p>
+    {% endif %}
+    
+    <!-- COMPLETED TODAY TABLE -->
+    {% if completed_chores %}
+        <h2 style="margin-top: 40px; margin-bottom: 15px; font-size: 18px;">
+            You have completed <strong style="color: #22c55e;">{{ completed_chores|length }}</strong> chore(s) today:
+        </h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #f0fdf4; border-bottom: 2px solid #22c55e;">
+                <th style="padding: 10px; text-align: left;">Chore</th>
+                <th style="padding: 10px; text-align: left;">Description</th>
+                <th style="padding: 10px; text-align: center;">Priority</th>
+                <th style="padding: 10px; text-align: center;">Status</th>
+            </tr>
+            {% for chore in completed_chores %}
+                <tr style="border-bottom: 1px solid #ddd; background-color: #f9f9f9;">
+                    <td style="padding: 10px; color: #999; text-decoration: line-through;">{{ chore.name }}</td>
+                    <td style="padding: 10px; color: #999; text-decoration: line-through;">{{ chore.description }}</td>
+                    <td style="padding: 10px; text-align: center;">{{ chore.priority }}/5</td>
+                    <td style="padding: 10px; text-align: center;">
+                        <form method="POST" action="/toggle/{{ chore.id }}" style="display: inline;">
+                            <input type="checkbox" checked onchange="this.form.submit()" style="width: 18px; height: 18px; cursor: pointer;">
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+    
+    <!-- OVERDUE CHORES TABLE -->
+    {% if overdue_chores %}
+        <h2 style="margin-top: 40px; margin-bottom: 15px; font-size: 18px; color: #e74c3c;">
+            ⚠️ You have <strong>{{ overdue_chores|length }}</strong> overdue chore(s):
+        </h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #fef2f2; border-bottom: 2px solid #e74c3c;">
+                <th style="padding: 10px; text-align: left;">Chore</th>
+                <th style="padding: 10px; text-align: left;">Description</th>
+                <th style="padding: 10px; text-align: center;">Priority</th>
+                <th style="padding: 10px; text-align: center;">Status</th>
+            </tr>
+            {% for chore in overdue_chores %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px;">{{ chore.name }}</td>
+                    <td style="padding: 10px;">{{ chore.description }}</td>
+                    <td style="padding: 10px; text-align: center;">{{ chore.priority }}/5</td>
+                    <td style="padding: 10px; text-align: center;">
+                        <form method="POST" action="/toggle/{{ chore.id }}" style="display: inline;">
+                            <input type="checkbox" onchange="this.form.submit()" style="width: 18px; height: 18px; cursor: pointer;">
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+    
+    <p style="margin-top: 30px;"><a href="/chores" style="color: #667eea;">View all chores →</a></p>
 {% endblock %}

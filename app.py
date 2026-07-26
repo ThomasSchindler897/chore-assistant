@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect
 from models import db, Chore
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -12,7 +13,30 @@ db.init_app(app)
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    all_chores = Chore.query.all()
+    todays_chores = [chore for chore in all_chores if chore.is_due_today() and not chore.completed]
+    completed_today = [chore for chore in all_chores if chore.is_due_today() and chore.completed]
+    overdue_chores = [chore for chore in all_chores if chore.is_overdue()]
+    
+    today_date = datetime.now().strftime('%A, %B %d, %Y')
+    
+    return render_template('home.html', 
+                         chores=todays_chores, 
+                         completed_chores=completed_today,
+                         overdue_chores=overdue_chores,
+                         today_date=today_date)
+
+@app.route('/toggle/<int:chore_id>', methods=['POST'])
+def toggle_chore(chore_id):
+    from flask import redirect
+    chore = Chore.query.get_or_404(chore_id)
+    chore.completed = not chore.completed
+    
+    if chore.completed:
+        chore.last_completed = datetime.now()
+    
+    db.session.commit()
+    return redirect('/')
 
 @app.route('/chores')
 def chores():

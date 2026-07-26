@@ -3,14 +3,15 @@
 {% block title %}Your Chores{% endblock %}
 
 {% block content %}
-    <h1>Your Chores</h1>
+    <h1>All Chores</h1>
     
     {% if chores %}
         <table style="width: 100%; border-collapse: collapse;">
             <tr style="background-color: #f0f0f0; border-bottom: 2px solid #333;">
-                <th style="padding: 10px; text-align: left;">Name</th>
+                <th style="padding: 10px; text-align: left;">Chore</th>
                 <th style="padding: 10px; text-align: left;">Description</th>
                 <th style="padding: 10px; text-align: center;">Priority</th>
+                <th style="padding: 10px; text-align: center;">Due</th>
                 <th style="padding: 10px; text-align: center;">Status</th>
                 <th style="padding: 10px; text-align: center;">Actions</th>
             </tr>
@@ -19,6 +20,7 @@
                     <td style="padding: 10px;">{{ chore.name }}</td>
                     <td style="padding: 10px;">{{ chore.description }}</td>
                     <td style="padding: 10px; text-align: center;">{{ chore.priority }}/5</td>
+                    <td style="padding: 10px; text-align: center;">{{ chore.get_next_due_date() }}</td>
                     <td style="padding: 10px; text-align: center;">
                         {% if chore.completed %}
                             ✅ Done
