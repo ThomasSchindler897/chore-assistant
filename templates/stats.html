@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics{% endblock %}
+
+{% block content %}
+    <h1>Chore Statistics</h1>
+    
+    <p style="color: #666; margin-bottom: 30px;">Track your completion rates and streaks here.</p>
+    
+    {% if chores %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #f0f0f0; border-bottom: 2px solid #333;">
+                <th style="padding: 10px; text-align: left;">Chore</th>
+                <th style="padding: 10px; text-align: center;">Frequency</th>
+                <th style="padding: 10px; text-align: center;">Current Streak 🔥</th>
+                <th style="padding: 10px; text-align: center;">Completion Rate</th>
+                <th style="padding: 10px; text-align: center;">Total Completions</th>
+            </tr>
+            {% for chore in chores %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px;">{{ chore.name }}</td>
+                    <td style="padding: 10px; text-align: center;">{{ chore.get_due_description() }}</td>
+                    <td style="padding: 10px; text-align: center;">{{ chore.get_current_streak() }}</td>
+                    <td style="padding: 10px; text-align: center;">
+                        <div style="background-color: #e0e0e0; border-radius: 4px; overflow: hidden; height: 20px;">
+                            <div style="background-color: #667eea; height: 100%; width: {{ chore.get_completion_percentage() }}%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">
+                                {% if chore.get_completion_percentage() > 0 %}
+                                    {{ chore.get_completion_percentage() }}%
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 10px; text-align: center;">{{ chore.get_completion_count() }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No chores yet!</p>
+    {% endif %}
+{% endblock %}

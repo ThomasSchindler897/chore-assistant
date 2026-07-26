@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Add Chore{% endblock %}
+
+{% block content %}
+    <h1>Add New Chore</h1>
+    
+    <form method="POST" style="max-width: 500px;">
+        <div style="margin-bottom: 15px;">
+            <label for="name" style="display: block; margin-bottom: 5px; font-weight: bold;">Chore Name:</label>
+            <input type="text" id="name" name="name" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label for="description" style="display: block; margin-bottom: 5px; font-weight: bold;">Description:</label>
+            <textarea id="description" name="description" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; height: 100px;"></textarea>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label for="priority" style="display: block; margin-bottom: 5px; font-weight: bold;">Priority (1-5):</label>
+            <input type="number" id="priority" name="priority" min="1" max="5" value="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label for="frequency" style="display: block; margin-bottom: 5px; font-weight: bold;">Frequency:</label>
+            <select id="frequency" name="frequency" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="once">One-time</option>
+            </select>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label for="frequency_details" style="display: block; margin-bottom: 5px; font-weight: bold;">Frequency Details:</label>
+            <input type="text" id="frequency_details" name="frequency_details" placeholder="e.g., Monday,Thursday or 15 for 15th" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <small style="color: #666; display: block; margin-top: 5px;">
+                Weekly: comma-separated days (Monday,Wednesday)<br>
+                Monthly: day of month (1-31)<br>
+                Daily/One-time: leave blank
+            </small>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" style="background-color: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Add Chore</button>
+            <a href="/chores" style="background-color: #999; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block;">Cancel</a>
+        </div>
+    </form>
+{% endblock %}
