@@ -5,6 +5,8 @@
 {% block content %}
     <h1>All Chores</h1>
     
+    <a href="/add" style="display: inline-block; background-color: #667eea; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; margin-bottom: 20px;">+ Add Chore</a>
+    
     {% if chores %}
         <table style="width: 100%; border-collapse: collapse;">
             <tr style="background-color: #f0f0f0; border-bottom: 2px solid #333;">
@@ -12,7 +14,6 @@
                 <th style="padding: 10px; text-align: left;">Description</th>
                 <th style="padding: 10px; text-align: center;">Priority</th>
                 <th style="padding: 10px; text-align: center;">Due</th>
-                <th style="padding: 10px; text-align: center;">Status</th>
                 <th style="padding: 10px; text-align: center;">Actions</th>
             </tr>
             {% for chore in chores %}
@@ -21,13 +22,6 @@
                     <td style="padding: 10px;">{{ chore.description }}</td>
                     <td style="padding: 10px; text-align: center;">{{ chore.priority }}/5</td>
                     <td style="padding: 10px; text-align: center;">{{ chore.get_next_due_date() }}</td>
-                    <td style="padding: 10px; text-align: center;">
-                        {% if chore.completed %}
-                            ✅ Done
-                        {% else %}
-                            ⬜ Pending
-                        {% endif %}
-                    </td>
                     <td style="padding: 10px; text-align: center;">
                         <a href="/edit/{{ chore.id }}" style="color: #667eea; text-decoration: none; margin-right: 10px;">Edit</a>
                         <form method="POST" action="/delete/{{ chore.id }}" style="display: inline;">
@@ -38,6 +32,6 @@
             {% endfor %}
         </table>
     {% else %}
-        <p>No chores yet! Add some to get started.</p>
+        <p>No chores yet! <a href="/add" style="color: #667eea;">Add one now →</a></p>
     {% endif %}
 {% endblock %}
