@@ -1,49 +1,61 @@
 {% extends "base.html" %}
 
-{% block title %}Add Chore{% endblock %}
+{% block title %}Add Chore - Chore Assistant{% endblock %}
 
 {% block content %}
-    <h1>Add New Chore</h1>
-    
-    <form method="POST" style="max-width: 500px;">
-        <div style="margin-bottom: 15px;">
-            <label for="name" style="display: block; margin-bottom: 5px; font-weight: bold;">Chore Name:</label>
-            <input type="text" id="name" name="name" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <h1 class="text-center mb-4"><i class="fas fa-plus-circle"></i> Add New Chore</h1>
+            
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="name" class="form-label"><strong>Chore Name</strong></label>
+                            <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Clean kitchen">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label"><strong>Description</strong></label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Add details about this chore..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="priority" class="form-label"><strong>Priority (1-5)</strong></label>
+                            <input type="number" class="form-control" id="priority" name="priority" min="1" max="5" value="3">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="frequency" class="form-label"><strong>Frequency</strong></label>
+                            <select class="form-select" id="frequency" name="frequency">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="once">One-time</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="frequency_details" class="form-label"><strong>Frequency Details</strong></label>
+                            <input type="text" class="form-control" id="frequency_details" name="frequency_details" placeholder="e.g., Monday,Wednesday or 15 for 15th">
+                            <small class="form-text text-muted d-block mt-2">
+                                <strong>Weekly:</strong> comma-separated days (Monday,Wednesday)<br>
+                                <strong>Monthly:</strong> day of month (1-31)<br>
+                                <strong>Daily/One-time:</strong> leave blank
+                            </small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-check"></i> Add Chore
+                            </button>
+                            <a href="/chores" class="btn btn-secondary flex-grow-1">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        
-        <div style="margin-bottom: 15px;">
-            <label for="description" style="display: block; margin-bottom: 5px; font-weight: bold;">Description:</label>
-            <textarea id="description" name="description" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; height: 100px;"></textarea>
-        </div>
-        
-        <div style="margin-bottom: 15px;">
-            <label for="priority" style="display: block; margin-bottom: 5px; font-weight: bold;">Priority (1-5):</label>
-            <input type="number" id="priority" name="priority" min="1" max="5" value="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-        </div>
-        
-        <div style="margin-bottom: 15px;">
-            <label for="frequency" style="display: block; margin-bottom: 5px; font-weight: bold;">Frequency:</label>
-            <select id="frequency" name="frequency" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="once">One-time</option>
-            </select>
-        </div>
-        
-        <div style="margin-bottom: 15px;">
-            <label for="frequency_details" style="display: block; margin-bottom: 5px; font-weight: bold;">Frequency Details:</label>
-            <input type="text" id="frequency_details" name="frequency_details" placeholder="e.g., Monday,Thursday or 15 for 15th" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-            <small style="color: #666; display: block; margin-top: 5px;">
-                Weekly: comma-separated days (Monday,Wednesday)<br>
-                Monthly: day of month (1-31)<br>
-                Daily/One-time: leave blank
-            </small>
-        </div>
-        
-        <div style="display: flex; gap: 10px;">
-            <button type="submit" style="background-color: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Add Chore</button>
-            <a href="/chores" style="background-color: #999; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block;">Cancel</a>
-        </div>
-    </form>
+    </div>
 {% endblock %}
