@@ -14,12 +14,111 @@
         :root {
             --primary: #667eea;
             --secondary: #764ba2;
+            --bg-light: #ffffff;
+            --text-light: #333333;
+            --border-light: #e0e0e0;
         }
         
         body {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             min-height: 100vh;
             padding-bottom: 2rem;
+        }
+        
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        
+        body.dark-mode .card {
+            background-color: #2a2a3e;
+            color: #e0e0e0;
+            border-color: #3a3a4e;
+        }
+        
+        body.dark-mode .card-title,
+        body.dark-mode h5 {
+            color: #ffffff;
+        }
+        
+        body.dark-mode .text-muted {
+            color: #b0b0b0 !important;
+        }
+        
+        body.dark-mode .form-control,
+        body.dark-mode .form-select {
+            background-color: #3a3a4e;
+            color: #e0e0e0;
+            border-color: #4a4a5e;
+        }
+        
+        body.dark-mode .form-control:focus,
+        body.dark-mode .form-select:focus {
+            background-color: #4a4a5e;
+            color: #e0e0e0;
+            border-color: var(--primary);
+        }
+        
+        body.dark-mode .alert {
+            background-color: #3a3a4e;
+            color: #e0e0e0;
+            border-color: #4a4a5e;
+        }
+        
+        /* Touchscreen Optimizations */
+        button, a.btn, input[type="checkbox"], input[type="radio"] {
+            min-height: 44px;
+            min-width: 44px;
+        }
+        
+        .btn {
+            padding: 0.7rem 1.5rem !important;
+            font-size: 1rem !important;
+            border-radius: 8px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.9rem !important;
+        }
+        
+        .form-control, .form-select {
+            padding: 0.75rem !important;
+            font-size: 1rem !important;
+            border-radius: 8px;
+            height: auto;
+        }
+        
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .form-check {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        
+        /* Remove hover transforms on touch devices */
+        @media (hover: none) {
+            .card:hover {
+                transform: none;
+            }
+            
+            .btn-primary:hover {
+                transform: none;
+            }
+            
+            nav a:hover {
+                transform: none;
+            }
+        }
+        
+        .nav-link {
+            padding: 0.75rem 1rem !important;
         }
         
         nav {
@@ -36,13 +135,12 @@
         
         nav a:hover {
             color: #ffd700 !important;
-            transform: translateY(-2px);
         }
         
         .content {
             max-width: 1000px;
             margin: 2rem auto;
-            padding: 0 1rem;
+            padding: 1rem;
         }
         
         h1 {
@@ -50,6 +148,11 @@
             font-weight: 700;
             margin-bottom: 2rem;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            font-size: 2rem;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
         }
         
         .card {
@@ -57,25 +160,92 @@
             border-radius: 12px;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             transition: all 0.3s;
+            margin-bottom: 1rem;
         }
         
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        @media (hover: any-hover) {
+            .card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            }
         }
         
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             border: none;
             font-weight: 600;
-            padding: 0.6rem 1.5rem;
+            width: 100%;
         }
         
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--secondary), var(--primary));
-            transform: translateY(-2px);
+        @media (hover: any-hover) {
+            .btn-primary:hover {
+                background: linear-gradient(135deg, var(--secondary), var(--primary));
+                transform: translateY(-2px);
+            }
+        }
+        
+        /* Progress Bar Enhancement */
+        .progress {
+            background-color: #e9ecef;
+            border-radius: 8px;
+            height: 28px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.dark-mode .progress {
+            background-color: #3a3a4e;
+        }
+        
+        .progress-bar {
+            border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                margin-bottom: 1.5rem;
+            }
+            
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .d-flex.gap-2 {
+                flex-direction: column;
+            }
+            
+            .d-flex.gap-2 > * {
+                width: 100%;
+            }
+        }
+        
+        /* Dark Mode Toggle Button */
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
     </style>
+    
 </head>
 <body>
     <!-- Navigation -->
@@ -101,6 +271,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/about">About</a>
                     </li>
+                    <li class="nav-item">
+                        <button class="theme-toggle" id="darkModeToggle" title="Toggle dark mode">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -111,7 +286,29 @@
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dark Mode Toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+        
+        // Check for saved preference or default to light mode
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            body.classList.add('dark-mode');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        
+        // Toggle dark mode
+        darkModeToggle.addEventListener('click', function() {
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('darkMode', 'enabled');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                localStorage.setItem('darkMode', 'disabled');
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+        });
+    </script>
 </body>
 </html>
