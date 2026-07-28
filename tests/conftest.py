@@ -41,6 +41,16 @@ def setup_db():
 
 
 # ============================================================================
+# SESSION FIXTURE - Database session access
+# ============================================================================
+
+@pytest.fixture(scope='function')
+def session(app):
+    """Provide database session for tests that need direct session access"""
+    return db.session
+
+
+# ============================================================================
 # BASIC CHORES (No Completions)
 # ============================================================================
 
@@ -55,8 +65,8 @@ def daily_chore(app):
 
 @pytest.fixture
 def weekly_chore(app):
-    """A simple weekly chore (Mondays and Wednesdays)"""
-    chore = Chore(name="Test Weekly Chore", frequency='weekly', frequency_details='Monday,Wednesday')
+    """A simple weekly chore (Mondays, Wednesdays, and Fridays)"""
+    chore = Chore(name="Test Weekly Chore", frequency='weekly', frequency_details='Monday,Wednesday,Friday')
     db.session.add(chore)
     db.session.commit()
     return chore
@@ -231,6 +241,12 @@ def multiple_chores(app):
 def client(app):
     """Provide a test client for route testing"""
     return app.test_client()
+
+
+@pytest.fixture
+def session(app):
+    """Provide direct access to the database session for tests"""
+    return db.session
 
 
 # ============================================================================

@@ -11,6 +11,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize database with app
 db.init_app(app)
 
+# Create tables on first run
+with app.app_context():
+    db.create_all()
+
 @app.route('/')
 def home():
     all_chores = Chore.query.all()

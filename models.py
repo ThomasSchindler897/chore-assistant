@@ -7,7 +7,7 @@ class Completion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     chore_id = db.Column(db.Integer, db.ForeignKey('chore.id'), nullable=False)
     completed_at = db.Column(db.DateTime, default=datetime.now)
-    chore = db.relationship('Chore', backref='completions')
+    chore = db.relationship('Chore', backref=db.backref('completions', cascade='all, delete-orphan'))
     
     def __repr__(self):
         return f'<Completion Chore {self.chore_id} at {self.completed_at}>'
