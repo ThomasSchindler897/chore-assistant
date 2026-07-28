@@ -115,8 +115,62 @@ def add_chore():
 
 @app.route('/stats')
 def stats():
+    from datetime import datetime, timedelta
+    
     all_chores = Chore.query.all()
-    return render_template('stats.html', chores=all_chores)
+    
+    # Calculate stats for each chore
+    chore_stats = []
+    for chore in all_chores:
+        chore_stats.append({
+            'chore': chore,
+            'streak': chore.get_current_streak(),
+            'completion_rate': chore.get_completion_percentage(),
+            'total_completions': chore.get_completion_count(),
+            'frequency': chore.get_due_description()
+        })
+    
+    # Calculate overall stats
+    total_completions = sum(c['total_completions'] for c in chore_stats)
+    avg_completion_rate = sum(c['completion_rate'] for c in chore_stats) / len(chore_stats) if chore_stats else 0
+    total_streaks = sum(c['streak'] for c in chore_stats)
+    
+    # Get monthly completion data (last 6 months)
+    monthly_data = {}
+    for i in range(6, -1, -1):
+        month_date = datetime.now() - timedelta(days=30*i)
+        month_key = month_date.strftime('%b %Y')
+        monthly_completions = 0
+        
+        for chore in all_chores:
+            for completion in chore.completions:
+                if (completion.completed_at.year == month_date.year and 
+                    completion.completed_at.month == month_date.month):
+                    monthly_completions += 1
+        
+        monthly_data[month_key] = monthly_completions
+    
+    # Achievement badges logic
+    badges = []
+    if total_completions >= 10:
+        badges.append({'name': 'Getting Started', 'icon': '🚀', 'desc': '10+ completions'})
+    if total_completions >= 50:
+        badges.append({'name': 'On a Roll', 'icon': '🔥', 'desc': '50+ completions'})
+    if total_completions >= 100:
+        badges.append({'name': 'Champion', 'icon': '👑', 'desc': '100+ completions'})
+    if avg_completion_rate >= 75:
+        badges.append({'name': 'Consistent', 'icon': '⭐', 'desc': '75%+ completion rate'})
+    if total_streaks >= 10:
+        badges.append({'name': 'Streak Master', 'icon': '💪', 'desc': '10+ day streak'})
+    
+    return render_template('stats.html',
+                         chores=all_chores,
+                         chore_stats=chore_stats,
+                         total_completions=total_completions,
+                         avg_completion_rate=avg_completion_rate,
+                         total_streaks=total_streaks,
+                         monthly_data=monthly_data,
+                         badges=badges)
 
 @app.route('/delete/<int:chore_id>', methods=['POST'])
 def delete_chore(chore_id):

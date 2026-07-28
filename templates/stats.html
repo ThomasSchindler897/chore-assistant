@@ -3,55 +3,172 @@
 {% block title %}Statistics - Chore Assistant{% endblock %}
 
 {% block content %}
-    <h1 class="mb-4"><i class="fas fa-chart-bar"></i> Chore Statistics</h1>
-    <p class="text-white fs-5 mb-4">Track your completion rates and streaks</p>
+    <h1 class="mb-4"><i class="fas fa-chart-bar"></i> Statistics & Performance</h1>
 
-    {% if chores %}
-        <div class="row">
-            {% for chore in chores %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ chore.name }}</h5>
-                            
-                            <div class="mb-3">
-                                <span class="badge bg-info">{{ chore.get_due_description() }}</span>
-                            </div>
+    <!-- OVERALL STATS CARDS -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-primary mb-2">{{ total_completions }}</h2>
+                    <p class="text-muted mb-0">Total Completions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-success mb-2">{{ avg_completion_rate|round(0)|int }}%</h2>
+                    <p class="text-muted mb-0">Average Completion Rate</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-danger mb-2">{{ total_streaks }}</h2>
+                    <p class="text-muted mb-0">Total Streak Days</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="text-warning mb-2">{{ chore_stats|length }}</h2>
+                    <p class="text-muted mb-0">Active Chores</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                            <!-- Streak -->
-                            <div class="mb-3">
-                                <small class="text-muted"><strong>Current Streak 🔥</strong></small>
-                                <div class="h5 mb-0">{{ chore.get_current_streak() }}</div>
-                            </div>
-
-                            <!-- Completion Rate -->
-                            <div class="mb-3">
-                                <small class="text-muted"><strong>Completion Rate</strong></small>
-                                <div class="progress" style="height: 25px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" 
-                                         style="width: {{ chore.get_completion_percentage() }}%;" 
-                                         aria-valuenow="{{ chore.get_completion_percentage() }}" 
-                                         aria-valuemin="0" aria-valuemax="100">
-                                        {{ chore.get_completion_percentage() }}%
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Total Completions -->
-                            <div>
-                                <small class="text-muted"><strong>Total Completions</strong></small>
-                                <div class="h5 mb-0">
-                                    <i class="fas fa-check-circle text-success"></i> {{ chore.get_completion_count() }}
+    <!-- ACHIEVEMENT BADGES -->
+    {% if badges %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-white mb-3"><i class="fas fa-trophy"></i> Achievements Unlocked</h2>
+                <div class="row">
+                    {% for badge in badges %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <div class="fs-1 mb-2">{{ badge.icon }}</div>
+                                    <h5 class="card-title">{{ badge.name }}</h5>
+                                    <p class="text-muted mb-0">{{ badge.desc }}</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="alert alert-info" role="alert">
-            <i class="fas fa-info-circle"></i> No chores yet! Create some to see statistics.
+            </div>
         </div>
     {% endif %}
+
+    <!-- MONTHLY COMPLETION CHART -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4"><i class="fas fa-chart-line"></i> Monthly Completions Trend</h5>
+                    <canvas id="monthlyChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPLETION RATES BY CHORE -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-white mb-3"><i class="fas fa-list-check"></i> Chore Performance</h2>
+        </div>
+        {% for stat in chore_stats %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ stat.chore.name }}</h5>
+                        
+                        <!-- Completion Rate -->
+                        <div class="mb-3">
+                            <small class="text-muted"><strong>Completion Rate</strong></small>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar bg-primary" role="progressbar" 
+                                     style="width: {{ stat.completion_rate }}%;" 
+                                     aria-valuenow="{{ stat.completion_rate }}" 
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    {{ stat.completion_rate }}%
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Streak -->
+                        <div class="mb-3">
+                            <small class="text-muted"><strong>Current Streak</strong></small>
+                            <div class="h5 mb-0">
+                                <i class="fas fa-fire text-warning"></i> {{ stat.streak }} days
+                            </div>
+                        </div>
+
+                        <!-- Frequency & Total -->
+                        <div class="mb-2">
+                            <small class="text-muted d-block">{{ stat.frequency }}</small>
+                            <small class="text-muted d-block">
+                                <i class="fas fa-check-circle text-success"></i> {{ stat.total_completions }} completions
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Chart.js Script -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script>
+        // Register the plugin
+        Chart.register(ChartDataLabels);
+        
+        // Monthly Completions Chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyChart = new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ monthly_data.keys()|list|tojson }},
+                datasets: [{
+                    label: 'Completions',
+                    data: {{ monthly_data.values()|list|tojson }},
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    datalabels: {
+                        color: '#fff',
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        },
+                        anchor: 'center',
+                        align: 'center'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 {% endblock %}
