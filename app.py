@@ -131,13 +131,41 @@ def calendar():
     from datetime import datetime, timedelta
     import calendar as cal
     
-    # Get current month/year
+    # Get current month/year and view type
     today = datetime.now()
     year = int(request.args.get('year', today.year))
     month = int(request.args.get('month', today.month))
+    view = request.args.get('view', 'monthly')  # 'monthly' or 'weekly'
     
     # Get all chores
     all_chores = Chore.query.all()
+    
+    # Calculate overdue chores
+    overdue_chores = [chore for chore in all_chores if chore.is_overdue()]
+    
+    # Calculate upcoming chores (next 7 days)
+    upcoming_chores = []
+    for i in range(1, 8):
+        future_date = today + timedelta(days=i)
+        future_date_str = future_date.strftime('%A')
+        
+        for chore in all_chores:
+            if chore.completed or chore.frequency == 'once':
+                continue
+            
+            if chore.frequency == 'daily':
+                upcoming_chores.append({'chore': chore, 'date': future_date, 'days_away': i})
+            elif chore.frequency == 'weekly' and chore.frequency_details:
+                due_days = [d.strip() for d in chore.frequency_details.split(',')]
+                if future_date_str in due_days:
+                    upcoming_chores.append({'chore': chore, 'date': future_date, 'days_away': i})
+            elif chore.frequency == 'monthly' and chore.frequency_details:
+                try:
+                    due_day = int(chore.frequency_details)
+                    if future_date.day == due_day:
+                        upcoming_chores.append({'chore': chore, 'date': future_date, 'days_away': i})
+                except ValueError:
+                    pass
     
     # Build calendar data
     calendar_days = cal.monthcalendar(year, month)
@@ -154,7 +182,6 @@ def calendar():
             test_date_str = test_date.strftime('%A')
             
             for chore in all_chores:
-                # Check if chore is due on this day
                 if chore.frequency == 'daily':
                     chores_today.append(chore)
                 elif chore.frequency == 'weekly' and chore.frequency_details:
@@ -187,7 +214,10 @@ def calendar():
                          prev_month=prev_month,
                          next_year=next_year,
                          next_month=next_month,
-                         today=today)
+                         today=today,
+                         overdue_chores=overdue_chores,
+                         upcoming_chores=upcoming_chores,
+                         view=view)
 
 if __name__ == '__main__':
     app.run(debug=True)

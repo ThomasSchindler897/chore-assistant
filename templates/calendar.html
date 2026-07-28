@@ -4,10 +4,44 @@
 
 {% block content %}
     <div class="row mb-4">
-        <div class="col-12">
+        <div class="col-lg-8">
             <h1><i class="fas fa-calendar-alt"></i> Chore Calendar</h1>
         </div>
+        <div class="col-lg-4 d-flex align-items-center justify-content-end gap-2">
+            <a href="/calendar?year={{ year }}&month={{ month }}&view=monthly" 
+               class="btn {% if view == 'monthly' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                <i class="fas fa-calendar"></i> Month
+            </a>
+            <a href="/calendar?year={{ year }}&month={{ month }}&view=weekly" 
+               class="btn {% if view == 'weekly' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                <i class="fas fa-calendar-week"></i> Week
+            </a>
+        </div>
     </div>
+
+    <!-- OVERDUE CHORES ALERT -->
+    {% if overdue_chores %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h4 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle"></i> {{ overdue_chores|length }} Overdue Chore(s)!
+                    </h4>
+                    <hr>
+                    {% for chore in overdue_chores %}
+                        <div class="mb-2">
+                            <strong>{{ chore.name }}</strong>
+                            <span class="badge bg-danger">{{ chore.frequency }}</span>
+                            <a href="/edit/{{ chore.id }}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-edit"></i> Mark Complete
+                            </a>
+                        </div>
+                    {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 
     <!-- Month Navigation -->
     <div class="row mb-4">
@@ -15,11 +49,11 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
-                        <a href="/calendar?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-outline-primary">
+                        <a href="/calendar?year={{ prev_year }}&month={{ prev_month }}&view={{ view }}" class="btn btn-outline-primary">
                             <i class="fas fa-chevron-left"></i> Previous
                         </a>
                         <h3 class="mb-0">{{ month_name }} {{ year }}</h3>
-                        <a href="/calendar?year={{ next_year }}&month={{ next_month }}" class="btn btn-outline-primary">
+                        <a href="/calendar?year={{ next_year }}&month={{ next_month }}&view={{ view }}" class="btn btn-outline-primary">
                             Next <i class="fas fa-chevron-right"></i>
                         </a>
                     </div>
@@ -29,7 +63,7 @@
     </div>
 
     <!-- Calendar Grid -->
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-body p-0">
@@ -94,6 +128,39 @@
             </div>
         </div>
     </div>
+
+    <!-- UPCOMING TASKS (Next 7 Days) -->
+    {% if upcoming_chores %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-white mb-3">
+                    <i class="fas fa-calendar-check"></i> 
+                    Upcoming Tasks <span class="badge bg-info">{{ upcoming_chores|length }}</span>
+                </h2>
+            </div>
+            {% for item in upcoming_chores %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.chore.name }}</h5>
+                            <p class="card-text text-muted">
+                                <i class="fas fa-calendar"></i> 
+                                {{ item.date.strftime('%A, %B %d') }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if item.days_away == 1 %}
+                                    <span class="badge bg-warning text-dark">Tomorrow</span>
+                                {% else %}
+                                    <span class="badge bg-info">In {{ item.days_away }} days</span>
+                                {% endif %}
+                                <small class="text-muted">{{ item.chore.frequency }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     <!-- Legend -->
     <div class="row mt-4">
