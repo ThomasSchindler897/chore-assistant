@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar - Chore Assistant{% endblock %}
+
+{% block content %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="fas fa-calendar-alt"></i> Chore Calendar</h1>
+        </div>
+    </div>
+
+    <!-- Month Navigation -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="/calendar?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-outline-primary">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                        <h3 class="mb-0">{{ month_name }} {{ year }}</h3>
+                        <a href="/calendar?year={{ next_year }}&month={{ next_month }}" class="btn btn-outline-primary">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr style="background-color: #f8f9fa;">
+                                    <th class="text-center py-3">Sun</th>
+                                    <th class="text-center py-3">Mon</th>
+                                    <th class="text-center py-3">Tue</th>
+                                    <th class="text-center py-3">Wed</th>
+                                    <th class="text-center py-3">Thu</th>
+                                    <th class="text-center py-3">Fri</th>
+                                    <th class="text-center py-3">Sat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for week in calendar_days %}
+                                    <tr>
+                                        {% for day in week %}
+                                            <td style="height: 120px; vertical-align: top; padding: 8px; border: 1px solid #dee2e6;" 
+                                                {% if day == today.day and month == today.month and year == today.year %}
+                                                    style="background-color: #fff3cd; height: 120px; vertical-align: top; padding: 8px; border: 2px solid #ffc107;"
+                                                {% elif day != 0 %}
+                                                    class="bg-light"
+                                                {% endif %}>
+                                                
+                                                {% if day == 0 %}
+                                                    <!-- Empty cell -->
+                                                {% else %}
+                                                    <!-- Day number -->
+                                                    <div class="mb-2">
+                                                        <strong class="fs-5">{{ day }}</strong>
+                                                        {% if day == today.day and month == today.month and year == today.year %}
+                                                            <span class="badge bg-warning text-dark">Today</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    
+                                                    <!-- Chores for this day -->
+                                                    <div style="font-size: 0.85rem;">
+                                                        {% if chores_by_day.get(day) %}
+                                                            {% for chore in chores_by_day.get(day) %}
+                                                                <div class="mb-1">
+                                                                    <span class="badge bg-primary">
+                                                                        <i class="fas fa-check-circle"></i> {{ chore.name[:12] }}{% if chore.name|length > 12 %}...{% endif %}
+                                                                    </span>
+                                                                </div>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <span class="text-muted"><i class="fas fa-check"></i> Free</span>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Legend</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <span class="badge bg-warning text-dark">Today</span> — Current day
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <span class="badge bg-primary"><i class="fas fa-check-circle"></i> Chore</span> — Task due
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

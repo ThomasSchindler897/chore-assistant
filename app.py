@@ -126,5 +126,68 @@ def delete_chore(chore_id):
     db.session.commit()
     return redirect('/chores')
 
+@app.route('/calendar')
+def calendar():
+    from datetime import datetime, timedelta
+    import calendar as cal
+    
+    # Get current month/year
+    today = datetime.now()
+    year = int(request.args.get('year', today.year))
+    month = int(request.args.get('month', today.month))
+    
+    # Get all chores
+    all_chores = Chore.query.all()
+    
+    # Build calendar data
+    calendar_days = cal.monthcalendar(year, month)
+    month_name = cal.month_name[month]
+    
+    # Map chores to days
+    chores_by_day = {}
+    for day_row in calendar_days:
+        for day in day_row:
+            if day == 0:
+                continue
+            chores_today = []
+            test_date = datetime(year, month, day)
+            test_date_str = test_date.strftime('%A')
+            
+            for chore in all_chores:
+                # Check if chore is due on this day
+                if chore.frequency == 'daily':
+                    chores_today.append(chore)
+                elif chore.frequency == 'weekly' and chore.frequency_details:
+                    due_days = [d.strip() for d in chore.frequency_details.split(',')]
+                    if test_date_str in due_days:
+                        chores_today.append(chore)
+                elif chore.frequency == 'monthly' and chore.frequency_details:
+                    try:
+                        due_day = int(chore.frequency_details)
+                        if day == due_day:
+                            chores_today.append(chore)
+                    except ValueError:
+                        pass
+            
+            chores_by_day[day] = chores_today
+    
+    # Navigation
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    next_month = month + 1 if month < 12 else 1
+    next_year = year if month < 12 else year + 1
+    
+    return render_template('calendar.html',
+                         year=year,
+                         month=month,
+                         month_name=month_name,
+                         calendar_days=calendar_days,
+                         chores_by_day=chores_by_day,
+                         prev_year=prev_year,
+                         prev_month=prev_month,
+                         next_year=next_year,
+                         next_month=next_month,
+                         today=today)
+
 if __name__ == '__main__':
     app.run(debug=True)
