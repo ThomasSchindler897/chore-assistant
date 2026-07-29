@@ -25,14 +25,234 @@
                             <input type="number" class="form-control" id="priority" name="priority" min="1" max="5" value="3">
                         </div>
 
+                        <!-- START DATE PICKER -->
                         <div class="mb-3">
-                            <label for="frequency" class="form-label"><strong>Frequency</strong></label>
-                            <select class="form-select" id="frequency" name="frequency">
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                                <option value="once">One-time</option>
-                            </select>
+                            <label for="startDate" class="form-label"><strong>Start Date</strong></label>
+                            <button type="button" class="btn btn-outline-primary w-100" id="startDateBtn">
+                                📅 <span id="selectedDate">Today</span>
+                            </button>
+                            <input type="hidden" id="startDate" name="start_date" value="">
+                        </div>
+
+                        <!-- CALENDAR PICKER MODAL -->
+                        <div id="calendarModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                            <div style="background: white; border-radius: 12px; padding: 20px; width: 90%; max-width: 500px;">
+                                <!-- Calendar Header -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="prevMonth">← Prev</button>
+                                    <h4 style="margin: 0;" id="monthYear">January 2024</h4>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="nextMonth">Next →</button>
+                                </div>
+
+                                <!-- Calendar Grid -->
+                                <div style="display: grid; grid-template-columns: repeat(7, minmax(40px, 1fr)); gap: 6px; margin-bottom: 20px;">
+                                    <!-- Day headers -->
+                                    <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Sun</div>
+                                    <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Mon</div>
+                                    <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Tue</div>
+                                    <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Wed</div>
+                                    <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Thu</div>
+                                    <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Fri</div>
+                                    <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Sat</div>
+            
+                                    <!-- Calendar dates will be inserted here -->
+                                    <div id="calendarDates" style="display: contents;"></div>
+                                </div>
+
+                                <!-- Close Button -->
+                                <button type="button" class="btn btn-secondary w-100" id="closeCal">Done</button>
+                            </div>
+                        </div>
+
+                        
+                        <!-- Calendar Picker Script -->
+                        <script>
+                            let selectedDate = new Date();
+                            let currentMonth = new Date();
+
+                            const startDateBtn = document.getElementById('startDateBtn');
+                            const calendarModal = document.getElementById('calendarModal');
+                            const prevMonthBtn = document.getElementById('prevMonth');
+                            const nextMonthBtn = document.getElementById('nextMonth');
+                            const closeCalBtn = document.getElementById('closeCal');
+                            const monthYearDisplay = document.getElementById('monthYear');
+                            const calendarDatesContainer = document.getElementById('calendarDates');
+                            const selectedDateDisplay = document.getElementById('selectedDate');
+                            const startDateInput = document.getElementById('startDate');
+
+                            // Open calendar ONLY when button clicked
+                            startDateBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                calendarModal.style.display = 'flex';
+                                renderCalendar();
+                            });
+
+                            // Close calendar
+                            closeCalBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                calendarModal.style.display = 'none';
+                            });
+
+                            // Previous month
+                            prevMonthBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                currentMonth.setMonth(currentMonth.getMonth() - 1);
+                                renderCalendar();
+                            });
+
+                            // Next month
+                            nextMonthBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                currentMonth.setMonth(currentMonth.getMonth() + 1);
+                                renderCalendar();
+                            });
+
+                            // Render calendar
+                            function renderCalendar() {
+                                const year = currentMonth.getFullYear();
+                                const month = currentMonth.getMonth();
+
+                                // Update header
+                                monthYearDisplay.textContent = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+                                // Clear dates
+                                calendarDatesContainer.innerHTML = '';
+
+                                // Get first day of month and number of days
+                                const firstDay = new Date(year, month, 1).getDay();
+                                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                                // Add empty cells for days before month starts
+                                for (let i = 0; i < firstDay; i++) {
+                                    const emptyCell = document.createElement('div');
+                                    calendarDatesContainer.appendChild(emptyCell);
+                                }
+
+                                // Add day buttons
+                                for (let day = 1; day <= daysInMonth; day++) {
+                                    const dateButton = document.createElement('button');
+                                    dateButton.type = 'button';
+                                    dateButton.textContent = day;
+                                    dateButton.style.cssText = `
+                                        padding: 12px;
+                                        border: 1px solid #dee2e6;
+                                        border-radius: 6px;
+                                        background: white;
+                                        cursor: pointer;
+                                        font-size: 1rem;
+                                        font-weight: 500;
+                                        min-height: 44px;
+                                        width: 100%;
+                                    `;
+
+                                    // Highlight today
+                                    const today = new Date();
+                                    if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                                        dateButton.style.backgroundColor = '#ffc107';
+                                        dateButton.style.fontWeight = 'bold';
+                                    }
+
+                                    // Highlight selected date
+                                    if (day === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear()) {
+                                        dateButton.style.backgroundColor = '#667eea';
+                                        dateButton.style.color = 'white';
+                                    }
+
+                                    dateButton.addEventListener('click', (e) => {
+                                        e.preventDefault();
+                                        selectedDate = new Date(year, month, day);
+                                        updateSelectedDate();
+                                        calendarModal.style.display = 'none';
+                                    });
+
+                                    calendarDatesContainer.appendChild(dateButton);
+                                }
+                            }
+
+                            // Update selected date display
+                            function updateSelectedDate() {
+                                const dateStr = selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                                selectedDateDisplay.textContent = dateStr;
+                                startDateInput.value = selectedDate.toISOString().split('T')[0];
+                            }
+
+                            // Initialize with TODAY (not 2024!)
+                            selectedDate = new Date();
+                            currentMonth = new Date();
+                            updateSelectedDate();
+                        </script>
+
+                        <!-- RECURRENCE TYPE BUTTONS -->
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Recurrence Type</strong></label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="recurrenceType" id="recSingle" value="single" checked>
+                                    <label class="btn btn-outline-primary" for="recSingle">Single Date</label>
+
+                                    <input type="radio" class="btn-check" name="recurrenceType" id="recDaily" value="daily">
+                                    <label class="btn btn-outline-primary" for="recDaily">Daily</label>
+
+                                    <input type="radio" class="btn-check" name="recurrenceType" id="recWeekly" value="weekly">
+                                <label class="btn btn-outline-primary" for="recWeekly">Weekly</label>
+
+                                <input type="radio" class="btn-check" name="recurrenceType" id="recMonthly" value="monthly">
+                                <label class="btn btn-outline-primary" for="recMonthly">Monthly</label>
+                            </div>
+                        </div>
+
+                        <!-- WEEKLY SELECTOR (Hidden by default) -->
+                        <div id="weeklySection" style="display: none;" class="mb-3">
+                            <label class="form-label"><strong>Select Days of Week</strong></label>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dayMonday" name="weeklyDays" value="Monday">
+                                    <label class="form-check-label" for="dayMonday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Monday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dayTuesday" name="weeklyDays" value="Tuesday">
+                                    <label class="form-check-label" for="dayTuesday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Tuesday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dayWednesday" name="weeklyDays" value="Wednesday">
+                                    <label class="form-check-label" for="dayWednesday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Wednesday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dayThursday" name="weeklyDays" value="Thursday">
+                                    <label class="form-check-label" for="dayThursday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Thursday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dayFriday" name="weeklyDays" value="Friday">
+                                    <label class="form-check-label" for="dayFriday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Friday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="daySaturday" name="weeklyDays" value="Saturday">
+                                    <label class="form-check-label" for="daySaturday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Saturday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="daySunday" name="weeklyDays" value="Sunday">
+                                    <label class="form-check-label" for="daySunday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Sunday
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FREQUENCY DETAILS (For future steps - hidden for now) -->
+                        <div id="frequencyDetailsSection" style="display: none;" class="mb-3">
+                            <label for="frequency_details" class="form-label"><strong>Frequency Details</strong></label>
+                            <input type="text" class="form-control" id="frequency_details" name="frequency_details" placeholder="Details...">
                         </div>
 
                         <div class="mb-3">
@@ -44,6 +264,57 @@
                                 <strong>Daily/One-time:</strong> leave blank
                             </small>
                         </div>
+
+                        <!-- Recurrence Type Toggle Script -->
+                        <script>
+                            const recurrenceTypeInputs = document.querySelectorAll('input[name="recurrenceType"]');
+                            const weeklySection = document.getElementById('weeklySection');
+                            const frequencyDetailsSection = document.getElementById('frequencyDetailsSection');
+
+                            recurrenceTypeInputs.forEach(input => {
+                                input.addEventListener('change', (e) => {
+                                    const value = e.target.value;
+            
+                                    // Hide all sections first
+                                    weeklySection.style.display = 'none';
+                                    frequencyDetailsSection.style.display = 'none';
+
+                                    // Show relevant section
+                                    if (value === 'weekly') {
+                                        weeklySection.style.display = 'block';
+                                    } else if (value === 'monthly') {
+                                        frequencyDetailsSection.style.display = 'block';
+                                    }
+                                });
+                            });
+
+                            // Handle form submission - combine selected days into frequency_details
+                            document.querySelector('form').addEventListener('submit', (e) => {
+                                const recType = document.querySelector('input[name="recurrenceType"]:checked').value;
+        
+                                if (recType === 'weekly') {
+                                    const selectedDays = Array.from(document.querySelectorAll('input[name="weeklyDays"]:checked'))
+                                        .map(cb => cb.value)
+                                        .join(',');
+            
+                                    if (selectedDays) {
+                                        document.getElementById('frequency_details').value = selectedDays;
+                                        // Update hidden frequency field
+                                        const frequencyInput = document.createElement('input');
+                                        frequencyInput.type = 'hidden';
+                                        frequencyInput.name = 'frequency';
+                                        frequencyInput.value = 'weekly';
+                                        e.target.appendChild(frequencyInput);
+                                    }
+                                } else if (recType === 'single') {
+                                    const frequencyInput = document.createElement('input');
+                                    frequencyInput.type = 'hidden';
+                                    frequencyInput.name = 'frequency';
+                                    frequencyInput.value = 'once';
+                                    e.target.appendChild(frequencyInput);
+                                }
+                            });
+                        </script>
 
                         <div class="d-flex gap-2 justify-content-center">
                             <button type="submit" class="btn btn-primary btn-sm">

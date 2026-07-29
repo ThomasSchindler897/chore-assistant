@@ -25,6 +25,7 @@ class Chore(db.Model):
     
     # Track when chore was last completed
     last_completed = db.Column(db.DateTime)
+    start_date = db.Column(db.DateTime, default=datetime.now)  # Date when chore recurrence begins
 
     def is_due_today(self):
         """Check if this chore is due today based on frequency"""
