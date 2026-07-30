@@ -3,6 +3,18 @@
 {% block title %}Add Chore - Chore Assistant{% endblock %}
 
 {% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
     <div class="row justify-content-center">
         <div class="col-lg-6">
             <h1 class="text-center mb-4"><i class="fas fa-plus-circle"></i> Add New Chore</h1>
@@ -200,6 +212,9 @@
                             </div>
                         </div>
 
+                        <!-- HIDDEN FREQUENCY FIELD -->
+                        <input type="hidden" id="frequencyField" name="frequency" value="once">
+
                         <!-- WEEKLY SELECTOR (Hidden by default) -->
                         <div id="weeklySection" style="display: none;" class="mb-3">
                             <label class="form-label"><strong>Select Days of Week</strong></label>
@@ -249,11 +264,17 @@
                             </div>
                         </div>
 
-                        <!-- FREQUENCY DETAILS (For future steps - hidden for now) -->
-                        <div id="frequencyDetailsSection" style="display: none;" class="mb-3">
-                            <label for="frequency_details" class="form-label"><strong>Frequency Details</strong></label>
-                            <input type="text" class="form-control" id="frequency_details" name="frequency_details" placeholder="Details...">
+                        <!-- MONTHLY SELECTOR (Hidden by default) -->
+                        <div id="monthlySection" style="display: none;" class="mb-3">
+                            <label class="form-label"><strong>Select Days of Month</strong></label>
+                            <p class="text-muted small">Tap to select (e.g., 1st Saturday, 4th Monday)</p>
+                            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px;" id="monthlyGrid">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
                         </div>
+
+                        <!-- Hidden input to store selected ordinal days -->
+                        <input type="hidden" id="frequency_details" name="frequency_details" value="">
 
                         <div class="mb-3">
                             <label for="frequency_details" class="form-label"><strong>Frequency Details</strong></label>
@@ -269,49 +290,128 @@
                         <script>
                             const recurrenceTypeInputs = document.querySelectorAll('input[name="recurrenceType"]');
                             const weeklySection = document.getElementById('weeklySection');
-                            const frequencyDetailsSection = document.getElementById('frequencyDetailsSection');
+                            const monthlySection = document.getElementById('monthlySection');
+                            const frequencyField = document.getElementById('frequencyField');
+                            const monthlyGrid = document.getElementById('monthlyGrid');
 
                             recurrenceTypeInputs.forEach(input => {
                                 input.addEventListener('change', (e) => {
                                     const value = e.target.value;
-            
+                                    
+                                    // Update hidden frequency field
+                                    if (value === 'single') {
+                                        frequencyField.value = 'once';
+                                    } else {
+                                        frequencyField.value = value;
+                                    }
+                                    
                                     // Hide all sections first
                                     weeklySection.style.display = 'none';
-                                    frequencyDetailsSection.style.display = 'none';
+                                    monthlySection.style.display = 'none';
 
                                     // Show relevant section
                                     if (value === 'weekly') {
                                         weeklySection.style.display = 'block';
                                     } else if (value === 'monthly') {
-                                        frequencyDetailsSection.style.display = 'block';
+                                        monthlySection.style.display = 'block';
+                                        renderMonthlyGrid();
                                     }
                                 });
                             });
 
-                            // Handle form submission - combine selected days into frequency_details
+                            // Render monthly ordinal grid
+                            function renderMonthlyGrid() {
+                                monthlyGrid.innerHTML = '';
+                                const today = new Date();
+                                const year = today.getFullYear();
+                                const month = today.getMonth();
+                                
+                                const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                                const ordinals = ['1st', '2nd', '3rd', '4th', '5th'];
+                                
+                                // Add day headers
+                                daysOfWeek.forEach(day => {
+                                    const header = document.createElement('div');
+                                    header.textContent = day;
+                                    header.style.cssText = 'text-align: center; font-weight: bold; font-size: 0.9rem; padding: 8px;';
+                                    monthlyGrid.appendChild(header);
+                                });
+                                
+                                // Add checkboxes for each ordinal day
+                                for (let ordinalIdx = 0; ordinalIdx < 5; ordinalIdx++) {
+                                    for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                                        // Calculate which date this represents
+                                        const dateNum = getOrdinalDateInMonth(year, month, ordinalIdx, dayIdx);
+                                        
+                                        if (dateNum === null) {
+                                            // This ordinal doesn't exist (e.g., 5th Monday)
+                                            const emptyCell = document.createElement('div');
+                                            monthlyGrid.appendChild(emptyCell);
+                                            continue;
+                                        }
+                                        
+                                        const dayName = daysOfWeek[dayIdx];
+                                        const ordinalName = ordinals[ordinalIdx];
+                                        const checkboxId = `ordinal_${ordinalIdx}_${dayIdx}`;
+                                        
+                                        const checkboxContainer = document.createElement('div');
+                                        checkboxContainer.style.cssText = 'display: flex; align-items: center; justify-content: center;';
+                                        
+                                        const checkbox = document.createElement('input');
+                                        checkbox.type = 'checkbox';
+                                        checkbox.id = checkboxId;
+                                        checkbox.className = 'ordinalCheckbox';
+                                        checkbox.value = `${ordinalName} ${dayName}`;
+                                        checkbox.style.cssText = 'width: 20px; height: 20px; cursor: pointer;';
+                                        
+                                        checkboxContainer.appendChild(checkbox);
+                                        monthlyGrid.appendChild(checkboxContainer);
+                                    }
+                                }
+                            }
+
+                            // Helper function to get the date number for an ordinal day
+                            function getOrdinalDateInMonth(year, month, ordinalIdx, dayIdx) {
+                                // dayIdx: 0=Mon, 1=Tue, ..., 6=Sun
+                                // Convert to JS day (0=Sun, 1=Mon, ..., 6=Sat)
+                                const jsDay = dayIdx === 6 ? 0 : dayIdx + 1;
+                                
+                                const firstDay = new Date(year, month, 1);
+                                const lastDay = new Date(year, month + 1, 0);
+                                
+                                let count = 0;
+                                for (let day = 1; day <= lastDay.getDate(); day++) {
+                                    const date = new Date(year, month, day);
+                                    if (date.getDay() === jsDay) {
+                                        if (count === ordinalIdx) {
+                                            return day;
+                                        }
+                                        count++;
+                                    }
+                                }
+                                return null;
+                            }
+
+                            // Handle form submission
                             document.querySelector('form').addEventListener('submit', (e) => {
                                 const recType = document.querySelector('input[name="recurrenceType"]:checked').value;
-        
+                                
                                 if (recType === 'weekly') {
                                     const selectedDays = Array.from(document.querySelectorAll('input[name="weeklyDays"]:checked'))
                                         .map(cb => cb.value)
                                         .join(',');
-            
+                                    
                                     if (selectedDays) {
                                         document.getElementById('frequency_details').value = selectedDays;
-                                        // Update hidden frequency field
-                                        const frequencyInput = document.createElement('input');
-                                        frequencyInput.type = 'hidden';
-                                        frequencyInput.name = 'frequency';
-                                        frequencyInput.value = 'weekly';
-                                        e.target.appendChild(frequencyInput);
                                     }
-                                } else if (recType === 'single') {
-                                    const frequencyInput = document.createElement('input');
-                                    frequencyInput.type = 'hidden';
-                                    frequencyInput.name = 'frequency';
-                                    frequencyInput.value = 'once';
-                                    e.target.appendChild(frequencyInput);
+                                } else if (recType === 'monthly') {
+                                    const selectedOrdinals = Array.from(document.querySelectorAll('.ordinalCheckbox:checked'))
+                                        .map(cb => cb.value)
+                                        .join(',');
+                                    
+                                    if (selectedOrdinals) {
+                                        document.getElementById('frequency_details').value = selectedOrdinals;
+                                    }
                                 }
                             });
                         </script>

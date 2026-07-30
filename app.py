@@ -4,6 +4,9 @@ from datetime import datetime, date
 
 app = Flask(__name__)
 
+# Secret key for sessions
+app.secret_key = 'your-secret-key-change-this'
+
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chores.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -99,12 +102,31 @@ def add_chore():
         frequency = request.form['frequency']
         frequency_details = request.form.get('frequency_details') or None
         
+        from datetime import datetime
+        
+        # Get start date from form
+        start_date_str = request.form.get('start_date')
+        if start_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        else:
+            start_date = datetime.now()
+        
+        # VALIDATE: Check if date is in the past
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        selected_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        if selected_date < today:
+            from flask import flash
+            flash('❌ Error: Chore cannot be added to a past date. Please select today or a future date.', 'danger')
+            return render_template('add_chore.html')
+        
         new_chore = Chore(
             name=name,
             description=description,
             priority=priority,
             frequency=frequency,
-            frequency_details=frequency_details
+            frequency_details=frequency_details,
+            start_date=start_date
         )
         
         db.session.add(new_chore)
@@ -180,6 +202,55 @@ def delete_chore(chore_id):
     db.session.commit()
     return redirect('/chores')
 
+def isOrdinalDateMatch(test_date, ordinal_string):
+    """Check if test_date matches any of the ordinal days in ordinal_string"""
+    from datetime import datetime, timedelta
+    
+    ordinals = [o.strip() for o in ordinal_string.split(',')]
+    day_name = test_date.strftime('%A')
+    
+    for ordinal in ordinals:
+        # Parse "1st Friday" format
+        try:
+            parts = ordinal.split()
+            if len(parts) != 2:
+                continue
+            
+            ordinal_num_str = parts[0]  # "1st", "2nd", etc.
+            target_day_name = parts[1]   # "Friday", etc.
+            
+            # Only check if day names match
+            if target_day_name != day_name:
+                continue
+            
+            # Extract the number (1st -> 1, 2nd -> 2, etc.)
+            ordinal_map = {'1st': 1, '2nd': 2, '3rd': 3, '4th': 4, '5th': 5}
+            target_ordinal = ordinal_map.get(ordinal_num_str)
+            
+            if target_ordinal is None:
+                continue
+            
+            # Count which occurrence of this day of week we're on
+            year = test_date.year
+            month = test_date.month
+            day_of_month = test_date.day
+            
+            # Count occurrences from start of month
+            occurrence_count = 0
+            for d in range(1, day_of_month + 1):
+                check_date = datetime(year, month, d)
+                if check_date.strftime('%A') == day_name:
+                    occurrence_count += 1
+            
+            if occurrence_count == target_ordinal:
+                return True
+                
+        except Exception as e:
+            print(f"Error parsing ordinal: {ordinal}, {e}")
+            continue
+    
+    return False
+
 @app.route('/calendar')
 def calendar():
     from datetime import datetime, timedelta
@@ -236,22 +307,33 @@ def calendar():
             test_date_str = test_date.strftime('%A')
             
             for chore in all_chores:
-                if chore.frequency == 'daily':
+                # IMPORTANT: Only show chores on or after their start_date
+                if test_date.date() < chore.start_date.date():
+                    continue
+                
+                # Single date (one-time) chores
+                if chore.frequency == 'once':
+                    if test_date.date() == chore.start_date.date():
+                        chores_today.append(chore)
+                
+                # Daily chores
+                elif chore.frequency == 'daily':
                     chores_today.append(chore)
+                
+                # Weekly chores
                 elif chore.frequency == 'weekly' and chore.frequency_details:
                     due_days = [d.strip() for d in chore.frequency_details.split(',')]
                     if test_date_str in due_days:
                         chores_today.append(chore)
+                
+                # Monthly chores
+                # Monthly chores (ordinal format: "1st Friday,4th Saturday")
                 elif chore.frequency == 'monthly' and chore.frequency_details:
-                    try:
-                        due_day = int(chore.frequency_details)
-                        if day == due_day:
-                            chores_today.append(chore)
-                    except ValueError:
-                        pass
+                    if isOrdinalDateMatch(test_date, chore.frequency_details):
+                        chores_today.append(chore)
             
             chores_by_day[day] = chores_today
-    
+
     # Navigation
     prev_month = month - 1 if month > 1 else 12
     prev_year = year if month > 1 else year - 1
@@ -259,19 +341,18 @@ def calendar():
     next_year = year if month < 12 else year + 1
     
     return render_template('calendar.html',
-                         year=year,
-                         month=month,
-                         month_name=month_name,
-                         calendar_days=calendar_days,
-                         chores_by_day=chores_by_day,
-                         prev_year=prev_year,
-                         prev_month=prev_month,
-                         next_year=next_year,
-                         next_month=next_month,
-                         today=today,
-                         overdue_chores=overdue_chores,
-                         upcoming_chores=upcoming_chores,
-                         view=view)
+                            year=year,
+                            month=month,
+                            month_name=month_name,
+                            calendar_days=calendar_days,
+                            chores_by_day=chores_by_day,
+                            prev_year=prev_year,
+                            prev_month=prev_month,
+                            next_year=next_year,
+                            next_month=next_month,
+                            today=today,
+                            overdue_chores=overdue_chores,
+                            upcoming_chores=upcoming_chores)
 
 if __name__ == '__main__':
     app.run(debug=True)

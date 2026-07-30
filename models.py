@@ -166,7 +166,9 @@ class Chore(db.Model):
         
         elif self.frequency == 'monthly':
             if self.frequency_details:
-                return f"On the {self.frequency_details}th of each month"
+                # Format: "1st Friday, 4th Saturday"
+                formatted = ', '.join([day.strip() for day in self.frequency_details.split(',')])
+                return f"On the {formatted} of each month"
             return "Monthly"
         
         elif self.frequency == 'once':
