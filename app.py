@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect
 from models import db, Chore, Completion
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+import calendar as calendar_module
 
 app = Flask(__name__)
 
@@ -81,12 +82,19 @@ def edit_chore(chore_id):
     chore = Chore.query.get_or_404(chore_id)
     
     if request.method == 'POST':
+        from datetime import datetime
+        
         chore.name = request.form['name']
-        chore.description = request.form['description']
+        chore.description = request.form.get('description') or None
         chore.priority = int(request.form['priority'])
         chore.frequency = request.form['frequency']
         chore.frequency_details = request.form.get('frequency_details') or None
         chore.completed = request.form.get('completed') == 'on'
+        
+        # IMPORTANT: Capture and save start_date
+        start_date_str = request.form.get('start_date')
+        if start_date_str:
+            chore.start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
         
         db.session.commit()
         return redirect('/chores')
@@ -253,8 +261,6 @@ def isOrdinalDateMatch(test_date, ordinal_string):
 
 @app.route('/calendar')
 def calendar():
-    from datetime import datetime, timedelta
-    import calendar as cal
     
     # Get current month/year and view type
     today = datetime.now()
@@ -292,9 +298,13 @@ def calendar():
                 except ValueError:
                     pass
     
-    # Build calendar data
-    calendar_days = cal.monthcalendar(year, month)
-    month_name = cal.month_name[month]
+    # Set first day of week to Sunday
+    calendar_module.setfirstweekday(calendar_module.SUNDAY)
+    
+    # Get calendar with Sunday as first day (no rotation needed)
+    calendar_days = calendar_module.monthcalendar(year, month)
+    
+    month_name = calendar_module.month_name[month]
     
     # Map chores to days
     chores_by_day = {}

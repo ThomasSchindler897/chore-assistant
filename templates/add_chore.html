@@ -27,15 +27,121 @@
                             <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Clean kitchen">
                         </div>
 
-                        <div class="mb-3">
-                            <label for="description" class="form-label"><strong>Description</strong></label>
-                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Add details about this chore..."></textarea>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="description" class="form-label"><strong>Description</strong></label>
+                                    <textarea class="form-control" id="description" name="description" rows="7" placeholder="Add details about this chore..."></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <!-- PRIORITY PICKER (iPhone-style scrollable) -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Priority (1-5)</strong></label>
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                                        <!-- Scrollable picker -->
+                                        <div id="priorityPicker" style="
+                                            height: 200px;
+                                            width: 80px;
+                                            border: 2px solid #667eea;
+                                            border-radius: 8px;
+                                            overflow-y: scroll;
+                                            scroll-behavior: smooth;
+                                            display: flex;
+                                            flex-direction: column;
+                                            align-items: center;
+                                            padding: 40px 0;
+                                            background: white;
+                                            position: relative;
+                                        ">
+                                            <!-- Numbers will be added by JavaScript -->
+                                        </div>
+                                        
+                                        <!-- Selected value display -->
+                                        <div style="text-align: center;">
+                                            <div id="selectedPriority" style="font-size: 3rem; font-weight: bold; color: #667eea;">3</div>
+                                            <small class="text-muted">Out of 5</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hidden input for form submission -->
+                                    <input type="hidden" id="priority" name="priority" value="3">
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="priority" class="form-label"><strong>Priority (1-5)</strong></label>
-                            <input type="number" class="form-control" id="priority" name="priority" min="1" max="5" value="3">
-                        </div>
+                        <!-- Priority Picker Script -->
+                        <script>
+                            const priorityPicker = document.getElementById('priorityPicker');
+                            const selectedPriorityDisplay = document.getElementById('selectedPriority');
+                            const priorityInput = document.querySelector('input[name="priority"]');
+                            
+                            // Create priority numbers (1-5)
+                            for (let i = 1; i <= 5; i++) {
+                                const numberDiv = document.createElement('div');
+                                numberDiv.textContent = i;
+                                numberDiv.style.cssText = `
+                                    font-size: 2rem;
+                                    font-weight: bold;
+                                    padding: 20px;
+                                    cursor: pointer;
+                                    color: #999;
+                                    transition: all 0.2s;
+                                    min-height: 60px;
+                                    display: flex;
+                                    align-items: center;
+                                `;
+                                
+                                numberDiv.addEventListener('click', () => {
+                                    selectPriority(i);
+                                });
+                                
+                                priorityPicker.appendChild(numberDiv);
+                            }
+                            
+                            // Handle scroll to snap to nearest value
+                            let scrollTimeout;
+                            priorityPicker.addEventListener('scroll', () => {
+                                clearTimeout(scrollTimeout);
+                                scrollTimeout = setTimeout(() => {
+                                    snapToNearestValue();
+                                }, 100);
+                            });
+                            
+                            function snapToNearestValue() {
+                                const scrollTop = priorityPicker.scrollTop;
+                                const itemHeight = 100; // 60px content + 40px padding
+                                const nearestIndex = Math.round(scrollTop / itemHeight);
+                                const value = Math.max(1, Math.min(5, nearestIndex + 1));
+                                selectPriority(value);
+                            }
+                            
+                            function selectPriority(value) {
+                                // Update display
+                                selectedPriorityDisplay.textContent = value;
+                                priorityInput.value = value;
+                                
+                                // Scroll to position
+                                const itemHeight = 100;
+                                priorityPicker.scrollTop = (value - 1) * itemHeight;
+                                
+                                // Highlight color
+                                const numbers = priorityPicker.querySelectorAll('div');
+                                numbers.forEach((num, idx) => {
+                                    if (idx + 1 === value) {
+                                        num.style.color = '#667eea';
+                                        num.style.fontSize = '2.5rem';
+                                    } else {
+                                        num.style.color = '#999';
+                                        num.style.fontSize = '2rem';
+                                    }
+                                });
+                            }
+                            
+                            // Initialize to 3
+                            selectPriority(3);
+                        </script>
 
                         <!-- START DATE PICKER -->
                         <div class="mb-3">
@@ -79,6 +185,12 @@
                         
                         <!-- Calendar Picker Script -->
                         <script>
+                            function parseLocalDate(dateStr) {
+                                if (!dateStr) return new Date();
+                                const [year, month, day] = dateStr.split('-').map(Number);
+                                return new Date(year, month - 1, day);
+                            }
+
                             let selectedDate = new Date();
                             let currentMonth = new Date();
 
@@ -275,16 +387,6 @@
 
                         <!-- Hidden input to store selected ordinal days -->
                         <input type="hidden" id="frequency_details" name="frequency_details" value="">
-
-                        <div class="mb-3">
-                            <label for="frequency_details" class="form-label"><strong>Frequency Details</strong></label>
-                            <input type="text" class="form-control" id="frequency_details" name="frequency_details" placeholder="e.g., Monday,Wednesday or 15 for 15th">
-                            <small class="form-text text-muted d-block mt-2">
-                                <strong>Weekly:</strong> comma-separated days (Monday,Wednesday)<br>
-                                <strong>Monthly:</strong> day of month (1-31)<br>
-                                <strong>Daily/One-time:</strong> leave blank
-                            </small>
-                        </div>
 
                         <!-- Recurrence Type Toggle Script -->
                         <script>

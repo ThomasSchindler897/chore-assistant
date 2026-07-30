@@ -4,7 +4,7 @@
 
 {% block content %}
     <div class="row justify-content-center">
-        <div class="col-lg-6">
+        <div class="col-lg-8">
             <h1 class="text-center mb-4"><i class="fas fa-edit"></i> Edit Chore</h1>
             
             <div class="card">
@@ -15,34 +15,140 @@
                             <input type="text" class="form-control" id="name" name="name" value="{{ chore.name }}" required>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="description" class="form-label"><strong>Description</strong></label>
-                            <textarea class="form-control" id="description" name="description" rows="3">{{ chore.description }}</textarea>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="description" class="form-label"><strong>Description</strong></label>
+                                    <textarea class="form-control" id="description" name="description" rows="7">{{ chore.description or '' }}</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <!-- PRIORITY PICKER (iPhone-style scrollable) -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Priority (1-5)</strong></label>
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                                        <!-- Scrollable picker -->
+                                        <div id="priorityPicker" style="
+                                            height: 200px;
+                                            width: 80px;
+                                            border: 2px solid #667eea;
+                                            border-radius: 8px;
+                                            overflow-y: scroll;
+                                            scroll-behavior: smooth;
+                                            display: flex;
+                                            flex-direction: column;
+                                            align-items: center;
+                                            padding: 40px 0;
+                                            background: white;
+                                            position: relative;
+                                        ">
+                                            <!-- Numbers will be added by JavaScript -->
+                                        </div>
+                                        
+                                        <!-- Selected value display -->
+                                        <div style="text-align: center;">
+                                            <div id="selectedPriority" style="font-size: 3rem; font-weight: bold; color: #667eea;">{{ chore.priority }}</div>
+                                            <small class="text-muted">Out of 5</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hidden input for form submission -->
+                                    <input type="hidden" id="priority" name="priority" value="{{ chore.priority }}">
+                                </div>
+                            </div>
                         </div>
 
+                        <!-- START DATE PICKER -->
                         <div class="mb-3">
-                            <label for="priority" class="form-label"><strong>Priority (1-5)</strong></label>
-                            <input type="number" class="form-control" id="priority" name="priority" min="1" max="5" value="{{ chore.priority }}">
+                            <label for="startDate" class="form-label"><strong>Start Date</strong></label>
+                            <button type="button" class="btn btn-outline-primary w-100" id="startDateBtn">
+                                📅 <span id="selectedDate">{{ chore.start_date.strftime('%a, %b %d') if chore.start_date else 'Today' }}</span>
+                            </button>
+                            <input type="hidden" id="startDate" name="start_date" value="{{ chore.start_date.strftime('%Y-%m-%d') if chore.start_date else '' }}">
                         </div>
 
+                        <!-- RECURRENCE TYPE BUTTONS -->
                         <div class="mb-3">
-                            <label for="frequency" class="form-label"><strong>Frequency</strong></label>
-                            <select class="form-select" id="frequency" name="frequency">
-                                <option value="daily" {% if chore.frequency == 'daily' %}selected{% endif %}>Daily</option>
-                                <option value="weekly" {% if chore.frequency == 'weekly' %}selected{% endif %}>Weekly</option>
-                                <option value="monthly" {% if chore.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
-                                <option value="once" {% if chore.frequency == 'once' %}selected{% endif %}>One-time</option>
-                            </select>
+                            <label class="form-label"><strong>Recurrence Type</strong></label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="recurrenceType" id="recSingle" value="single" {% if chore.frequency == 'once' %}checked{% endif %}>
+                                <label class="btn btn-outline-primary" for="recSingle">Single Date</label>
+
+                                <input type="radio" class="btn-check" name="recurrenceType" id="recDaily" value="daily" {% if chore.frequency == 'daily' %}checked{% endif %}>
+                                <label class="btn btn-outline-primary" for="recDaily">Daily</label>
+
+                                <input type="radio" class="btn-check" name="recurrenceType" id="recWeekly" value="weekly" {% if chore.frequency == 'weekly' %}checked{% endif %}>
+                                <label class="btn btn-outline-primary" for="recWeekly">Weekly</label>
+
+                                <input type="radio" class="btn-check" name="recurrenceType" id="recMonthly" value="monthly" {% if chore.frequency == 'monthly' %}checked{% endif %}>
+                                <label class="btn btn-outline-primary" for="recMonthly">Monthly</label>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="frequency_details" class="form-label"><strong>Frequency Details</strong></label>
-                            <input type="text" class="form-control" id="frequency_details" name="frequency_details" value="{{ chore.frequency_details or '' }}" placeholder="e.g., Monday,Wednesday or 15 for 15th">
-                            <small class="form-text text-muted d-block mt-2">
-                                <strong>Weekly:</strong> comma-separated days (Monday,Wednesday)<br>
-                                <strong>Monthly:</strong> day of month (1-31)
-                            </small>
+                        <!-- WEEKLY SELECTOR (Hidden by default) -->
+                        <div id="weeklySection" style="display: none;" class="mb-3">
+                            <label class="form-label"><strong>Select Days of Week</strong></label>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dayMonday" name="weeklyDays" value="Monday" {% if chore.frequency == 'weekly' and 'Monday' in (chore.frequency_details or '') %}checked{% endif %}>
+                                    <label class="form-check-label" for="dayMonday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Monday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dayTuesday" name="weeklyDays" value="Tuesday" {% if chore.frequency == 'weekly' and 'Tuesday' in (chore.frequency_details or '') %}checked{% endif %}>
+                                    <label class="form-check-label" for="dayTuesday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Tuesday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dayWednesday" name="weeklyDays" value="Wednesday" {% if chore.frequency == 'weekly' and 'Wednesday' in (chore.frequency_details or '') %}checked{% endif %}>
+                                    <label class="form-check-label" for="dayWednesday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Wednesday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dayThursday" name="weeklyDays" value="Thursday" {% if chore.frequency == 'weekly' and 'Thursday' in (chore.frequency_details or '') %}checked{% endif %}>
+                                    <label class="form-check-label" for="dayThursday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Thursday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dayFriday" name="weeklyDays" value="Friday" {% if chore.frequency == 'weekly' and 'Friday' in (chore.frequency_details or '') %}checked{% endif %}>
+                                    <label class="form-check-label" for="dayFriday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Friday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="daySaturday" name="weeklyDays" value="Saturday" {% if chore.frequency == 'weekly' and 'Saturday' in (chore.frequency_details or '') %}checked{% endif %}>
+                                    <label class="form-check-label" for="daySaturday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Saturday
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="daySunday" name="weeklyDays" value="Sunday" {% if chore.frequency == 'weekly' and 'Sunday' in (chore.frequency_details or '') %}checked{% endif %}>
+                                    <label class="form-check-label" for="daySunday" style="font-size: 1.1rem; cursor: pointer; padding: 10px;">
+                                        Sunday
+                                    </label>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- MONTHLY SELECTOR (Hidden by default) -->
+                        <div id="monthlySection" style="display: none;" class="mb-3">
+                            <label class="form-label"><strong>Select Days of Month</strong></label>
+                            <p class="text-muted small">Tap to select (e.g., 1st Saturday, 4th Monday)</p>
+                            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px;" id="monthlyGrid">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Hidden input to store selected ordinal days -->
+                        <input type="hidden" id="frequency_details" name="frequency_details" value="{{ chore.frequency_details or '' }}">
+
+                        <!-- Hidden frequency field -->
+                        <input type="hidden" id="frequencyField" name="frequency" value="{% if chore.frequency == 'once' %}once{% else %}{{ chore.frequency }}{% endif %}">
 
                         <div class="mb-3">
                             <div class="form-check">
@@ -53,8 +159,8 @@
                             </div>
                         </div>
 
-                        <div class="d-flex gap-2 justify-content-center">
-                            <button type="submit" class="btn btn-primary btn-sm">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Save Changes
                             </button>
                             <a href="/chores" class="btn btn-secondary">
@@ -66,4 +172,371 @@
             </div>
         </div>
     </div>
+
+    <!-- CALENDAR PICKER MODAL (Same as add form) -->
+    <div id="calendarModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 20px; width: 90%; max-width: 500px;">
+            <!-- Calendar Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="prevMonth">← Prev</button>
+                <h4 style="margin: 0;" id="monthYear">January 2024</h4>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="nextMonth">Next →</button>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px;">
+                <!-- Day headers -->
+                <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Sun</div>
+                <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Mon</div>
+                <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Tue</div>
+                <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Wed</div>
+                <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Thu</div>
+                <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Fri</div>
+                <div style="text-align: center; font-weight: bold; padding: 10px; font-size: 0.9rem;">Sat</div>
+                
+                <!-- Calendar dates will be inserted here -->
+                <div id="calendarDates" style="display: contents;"></div>
+            </div>
+
+            <!-- Close Button -->
+            <button type="button" class="btn btn-secondary w-100" id="closeCal">Done</button>
+        </div>
+    </div>
+
+    <!-- CALENDAR PICKER SCRIPT -->
+    <script>
+        function parseLocalDate(dateStr) {
+            if (!dateStr) return new Date();
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        let selectedDate = parseLocalDate('{{ chore.start_date.strftime('%Y-%m-%d') if chore.start_date else '' }}');
+        let currentMonth = new Date(selectedDate);
+
+        const startDateBtn = document.getElementById('startDateBtn');
+        const calendarModal = document.getElementById('calendarModal');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const closeCalBtn = document.getElementById('closeCal');
+        const monthYearDisplay = document.getElementById('monthYear');
+        const calendarDatesContainer = document.getElementById('calendarDates');
+        const selectedDateDisplay = document.getElementById('selectedDate');
+        const startDateInput = document.getElementById('startDate');
+
+        // Open calendar ONLY when button clicked
+        startDateBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            calendarModal.style.display = 'flex';
+            renderCalendar();
+        });
+
+        // Close calendar
+        closeCalBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            calendarModal.style.display = 'none';
+        });
+
+        // Previous month
+        prevMonthBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentMonth.setMonth(currentMonth.getMonth() - 1);
+            renderCalendar();
+        });
+
+        // Next month
+        nextMonthBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentMonth.setMonth(currentMonth.getMonth() + 1);
+            renderCalendar();
+        });
+
+        // Render calendar
+        function renderCalendar() {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+
+            // Update header
+            monthYearDisplay.textContent = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            // Clear dates
+            calendarDatesContainer.innerHTML = '';
+
+            // Get first day of month and number of days
+            // Use local timezone by constructing date this way
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Add empty cells for days before month starts
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                calendarDatesContainer.appendChild(emptyCell);
+            }
+
+            // Add day buttons
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateButton = document.createElement('button');
+                dateButton.type = 'button';
+                dateButton.textContent = day;
+                dateButton.style.cssText = `
+                    padding: 12px;
+                    border: 1px solid #dee2e6;
+                    border-radius: 6px;
+                    background: white;
+                    cursor: pointer;
+                    font-size: 1rem;
+                    font-weight: 500;
+                    min-height: 44px;
+                    width: 100%;
+                `;
+
+                // Highlight today
+                const today = new Date();
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dateButton.style.backgroundColor = '#ffc107';
+                    dateButton.style.fontWeight = 'bold';
+                }
+
+                // Highlight selected date
+                if (day === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear()) {
+                    dateButton.style.backgroundColor = '#667eea';
+                    dateButton.style.color = 'white';
+                }
+
+                dateButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    selectedDate = new Date(year, month, day);
+                    updateSelectedDate();
+                    calendarModal.style.display = 'none';
+                });
+
+                calendarDatesContainer.appendChild(dateButton);
+            }
+        }
+
+        // Update selected date display
+        function updateSelectedDate() {
+            const dateStr = selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            selectedDateDisplay.textContent = dateStr;
+            startDateInput.value = selectedDate.toISOString().split('T')[0];
+        }
+
+        // Initialize
+        updateSelectedDate();
+    </script>
+
+    <!-- RECURRENCE TYPE TOGGLE SCRIPT -->
+    <script>
+        const recurrenceTypeInputs = document.querySelectorAll('input[name="recurrenceType"]');
+        const weeklySection = document.getElementById('weeklySection');
+        const monthlySection = document.getElementById('monthlySection');
+        const frequencyField = document.getElementById('frequencyField');
+        const monthlyGrid = document.getElementById('monthlyGrid');
+
+        recurrenceTypeInputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                const value = e.target.value;
+                
+                // Update hidden frequency field
+                if (value === 'single') {
+                    frequencyField.value = 'once';
+                } else {
+                    frequencyField.value = value;
+                }
+                
+                // Hide all sections first
+                weeklySection.style.display = 'none';
+                monthlySection.style.display = 'none';
+
+                // Show relevant section
+                if (value === 'weekly') {
+                    weeklySection.style.display = 'block';
+                } else if (value === 'monthly') {
+                    monthlySection.style.display = 'block';
+                    renderMonthlyGrid();
+                }
+            });
+        });
+
+        // Render monthly ordinal grid
+        function renderMonthlyGrid() {
+            monthlyGrid.innerHTML = '';
+            const year = selectedDate.getFullYear();
+            const month = selectedDate.getMonth();
+            
+            const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const ordinals = ['1st', '2nd', '3rd', '4th'];
+            
+            // Add day headers
+            daysOfWeek.forEach(day => {
+                const header = document.createElement('div');
+                header.textContent = day.substring(0, 3);
+                header.style.cssText = 'text-align: center; font-weight: bold; font-size: 0.9rem; padding: 8px;';
+                monthlyGrid.appendChild(header);
+            });
+            
+            // Add checkboxes for each ordinal day
+            for (let ordinalIdx = 0; ordinalIdx < 4; ordinalIdx++) {
+                for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                    // Calculate which date this represents
+                    const dateNum = getOrdinalDateInMonth(year, month, ordinalIdx, dayIdx);
+                    
+                    if (dateNum === null) {
+                        // This ordinal doesn't exist
+                        const emptyCell = document.createElement('div');
+                        monthlyGrid.appendChild(emptyCell);
+                        continue;
+                    }
+                    
+                    const dayName = daysOfWeek[dayIdx];
+                    const ordinalName = ordinals[ordinalIdx];
+                    const checkboxId = `ordinal_${ordinalIdx}_${dayIdx}`;
+                    const value = `${ordinalName} ${dayName}`;
+                    
+                    const checkboxContainer = document.createElement('div');
+                    checkboxContainer.style.cssText = 'display: flex; align-items: center; justify-content: center;';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = checkboxId;
+                    checkbox.className = 'ordinalCheckbox';
+                    checkbox.value = value;
+                    checkbox.style.cssText = 'width: 20px; height: 20px; cursor: pointer;';
+                    
+                    // Pre-check if this ordinal is in frequency_details
+                    const frequencyDetails = document.getElementById('frequency_details').value;
+                    if (frequencyDetails && frequencyDetails.includes(value)) {
+                        checkbox.checked = true;
+                    }
+                    
+                    checkboxContainer.appendChild(checkbox);
+                    monthlyGrid.appendChild(checkboxContainer);
+                }
+            }
+        }
+
+        // Helper function to get the date number for an ordinal day
+        function getOrdinalDateInMonth(year, month, ordinalIdx, dayIdx) {
+            // dayIdx: 0=Mon, 1=Tue, ..., 6=Sun
+            // Convert to JS day (0=Sun, 1=Mon, ..., 6=Sat)
+            const jsDay = dayIdx === 6 ? 0 : dayIdx + 1;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            let count = 0;
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const date = new Date(year, month, day);
+                if (date.getDay() === jsDay) {
+                    if (count === ordinalIdx) {
+                        return day;
+                    }
+                    count++;
+                }
+            }
+            return null;
+        }
+
+        // PRIORITY PICKER SCRIPT
+        const priorityPicker = document.getElementById('priorityPicker');
+        const selectedPriorityDisplay = document.getElementById('selectedPriority');
+        const priorityInput = document.querySelector('input[name="priority"]');
+        
+        // Create priority numbers (1-5)
+        for (let i = 1; i <= 5; i++) {
+            const numberDiv = document.createElement('div');
+            numberDiv.textContent = i;
+            numberDiv.style.cssText = `
+                font-size: 2rem;
+                font-weight: bold;
+                padding: 20px;
+                cursor: pointer;
+                color: #999;
+                transition: all 0.2s;
+                min-height: 60px;
+                display: flex;
+                align-items: center;
+            `;
+            
+            numberDiv.addEventListener('click', () => {
+                selectPriority(i);
+            });
+            
+            priorityPicker.appendChild(numberDiv);
+        }
+        
+        // Handle scroll to snap to nearest value
+        let scrollTimeout;
+        priorityPicker.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                snapToNearestValue();
+            }, 100);
+        });
+        
+        function snapToNearestValue() {
+            const scrollTop = priorityPicker.scrollTop;
+            const itemHeight = 100;
+            const nearestIndex = Math.round(scrollTop / itemHeight);
+            const value = Math.max(1, Math.min(5, nearestIndex + 1));
+            selectPriority(value);
+        }
+        
+        function selectPriority(value) {
+            // Update display
+            selectedPriorityDisplay.textContent = value;
+            priorityInput.value = value;
+            
+            // Scroll to position
+            const itemHeight = 100;
+            priorityPicker.scrollTop = (value - 1) * itemHeight;
+            
+            // Highlight color
+            const numbers = priorityPicker.querySelectorAll('div');
+            numbers.forEach((num, idx) => {
+                if (idx + 1 === value) {
+                    num.style.color = '#667eea';
+                    num.style.fontSize = '2.5rem';
+                } else {
+                    num.style.color = '#999';
+                    num.style.fontSize = '2rem';
+                }
+            });
+        }
+        
+        // Initialize to chore's current priority
+        selectPriority({{ chore.priority }});
+
+        // Handle form submission
+        document.querySelector('form').addEventListener('submit', (e) => {
+            const recType = document.querySelector('input[name="recurrenceType"]:checked').value;
+            
+            if (recType === 'weekly') {
+                const selectedDays = Array.from(document.querySelectorAll('input[name="weeklyDays"]:checked'))
+                    .map(cb => cb.value)
+                    .join(',');
+                
+                if (selectedDays) {
+                    document.getElementById('frequency_details').value = selectedDays;
+                }
+            } else if (recType === 'monthly') {
+                const selectedOrdinals = Array.from(document.querySelectorAll('.ordinalCheckbox:checked'))
+                    .map(cb => cb.value)
+                    .join(',');
+                
+                if (selectedOrdinals) {
+                    document.getElementById('frequency_details').value = selectedOrdinals;
+                }
+            }
+        });
+
+        // Show the correct section on page load
+        const initialRecType = document.querySelector('input[name="recurrenceType"]:checked').value;
+        if (initialRecType === 'weekly') {
+            weeklySection.style.display = 'block';
+        } else if (initialRecType === 'monthly') {
+            monthlySection.style.display = 'block';
+            renderMonthlyGrid();
+        }
+    </script>
 {% endblock %}
