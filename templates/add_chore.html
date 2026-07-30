@@ -16,7 +16,7 @@
 {% endwith %}
 
     <div class="row justify-content-center">
-        <div class="col-lg-6">
+        <div class="col-lg-8">
             <h1 class="text-center mb-4"><i class="fas fa-plus-circle"></i> Add New Chore</h1>
             
             <div class="card">
@@ -322,9 +322,8 @@
                             // Render monthly ordinal grid
                             function renderMonthlyGrid() {
                                 monthlyGrid.innerHTML = '';
-                                const today = new Date();
-                                const year = today.getFullYear();
-                                const month = today.getMonth();
+                                const year = selectedDate.getFullYear();
+                                const month = selectedDate.getMonth();
                                 
                                 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
                                 const ordinals = ['1st', '2nd', '3rd', '4th', '5th'];
@@ -338,7 +337,7 @@
                                 });
                                 
                                 // Add checkboxes for each ordinal day
-                                for (let ordinalIdx = 0; ordinalIdx < 5; ordinalIdx++) {
+                                for (let ordinalIdx = 0; ordinalIdx < 4; ordinalIdx++) {
                                     for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
                                         // Calculate which date this represents
                                         const dateNum = getOrdinalDateInMonth(year, month, ordinalIdx, dayIdx);

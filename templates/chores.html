@@ -25,9 +25,9 @@
                             
                             <div class="mb-3">
                                 <span class="badge bg-info">Priority {{ chore.priority }}/5</span>
-                                <span class="badge bg-secondary">{{ chore.get_due_description() }}</span>
+                                <span class="badge bg-secondary" style="white-space: normal; word-wrap: break-word; overflow-wrap: break-word; display: inline-block; max-width: 200px;">{{ chore.get_due_description() }}</span>
                             </div>
-                            
+
                             <div class="alert alert-light mb-2 py-2">
                                 <small><strong>Next due:</strong> {{ chore.get_next_due_date() }}</small>
                             </div>
