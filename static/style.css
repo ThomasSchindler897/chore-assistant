@@ -72,6 +72,39 @@ a:hover {
     text-decoration: underline;
 }
 
+/* Touchscreen-friendly styles */
+button, .btn, a.btn, .form-control, .form-select {
+    min-height: 50px;
+    min-width: 80px;
+    font-size: 1rem;
+    border-radius: 12px;
+    touch-action: manipulation;
+}
+
+button, .btn, a.btn {
+    padding: 0.9rem 1.4rem !important;
+}
+
+.form-control, .form-select {
+    padding: 1rem !important;
+}
+
+nav a, .navbar-nav .nav-link {
+    padding: 16px 20px;
+}
+
+.card {
+    border-radius: 18px;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.table th, .table td {
+    padding: 1rem !important;
+}
+
 /* Completed chore styling on calendar */
 .chore-completed {
     color: #e9f7ef; /* light text on green badge */
