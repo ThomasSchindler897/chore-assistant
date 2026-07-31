@@ -3,7 +3,10 @@ Goal: Build a Raspberry Pi-powered household chore assistant with touchscreen, v
 
 Milestone 1 – Development Environment
 Objective: Complete these mini-projects in 15–30 minute sessions.
+<<<<<<< HEAD
 
+=======
+>>>>>>> 28b9fb1f3bea6f37992fefe0838e3d738ac808ac
 1. Install Python, VS Code, Git
 2. Create GitHub repo and initialize Git
 3. Create project folder structure
@@ -139,4 +142,8 @@ Development Philosophy
 - Every coding session ends with a working feature.
 - Commit to Git after each mini-project.
 - Focus on learning concepts, not copying code.
+<<<<<<< HEAD
 - Build on your computer first; deploy to the Raspberry Pi later.
+=======
+- Build on your computer first; deploy to the Raspberry Pi later.
+>>>>>>> 28b9fb1f3bea6f37992fefe0838e3d738ac808ac
