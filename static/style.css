@@ -78,3 +78,33 @@ a:hover {
     text-decoration: line-through;
     opacity: 0.95;
 }
+
+/* Make outline primary buttons more visible while matching theme */
+.btn-outline-primary {
+    border-color: #667eea !important;
+    color: #1e293b !important;
+    background-color: #eef2ff; /* subtle indigo tint */
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background-color: #e0e7ff;
+    color: #0f172a !important;
+    border-color: #5a67d8 !important;
+    box-shadow: 0 4px 10px rgba(102,126,234,0.12);
+}
+
+/* Filled secondary styling to match theme for inactive view buttons */
+.btn-secondary {
+    background-color: #eef2ff !important; /* subtle indigo tint */
+    color: #0f172a !important;
+    border-color: #dbeafe !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+.btn-secondary:hover,
+.btn-secondary:focus {
+    background-color: #e0e7ff !important;
+    color: #0b1220 !important;
+    border-color: #c7d2fe !important;
+    box-shadow: 0 6px 14px rgba(102,126,234,0.08);
+}

@@ -8,9 +8,11 @@
             <h1><i class="fas fa-calendar-alt"></i> Chore Calendar</h1>
         </div>
         <div class="col-lg-4 d-flex align-items-center justify-content-end gap-2">
-    <a href="/calendar?view=monthly" 
-       class="btn btn-primary">
+    <a href="/calendar?view=monthly" class="btn {% if view == 'monthly' %}btn-primary{% else %}btn-secondary{% endif %}" style="min-width:120px">
         <i class="fas fa-calendar"></i> Month
+    </a>
+    <a href="/calendar?view=weekly" class="btn {% if view == 'weekly' %}btn-primary{% else %}btn-secondary{% endif %}" style="min-width:120px">
+        <i class="fas fa-calendar-week"></i> Week
     </a>
 </div>
     </div>
@@ -45,13 +47,23 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
-                        <a href="/calendar?year={{ prev_year }}&month={{ prev_month }}&view={{ view }}" class="btn btn-outline-primary">
-                            <i class="fas fa-chevron-left"></i> Previous
-                        </a>
-                        <h3 class="mb-0">{{ month_name }} {{ year }}</h3>
-                        <a href="/calendar?year={{ next_year }}&month={{ next_month }}&view={{ view }}" class="btn btn-outline-primary">
-                            Next <i class="fas fa-chevron-right"></i>
-                        </a>
+                        {% if view == 'weekly' %}
+                            <a href="/calendar?view=weekly&start={{ prev_week_start }}" class="btn btn-outline-primary">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                            <h3 class="mb-0">Week: {{ week_dates[0].strftime('%b %d') }} — {{ week_dates[-1].strftime('%b %d, %Y') }}</h3>
+                            <a href="/calendar?view=weekly&start={{ next_week_start }}" class="btn btn-outline-primary">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% else %}
+                            <a href="/calendar?year={{ prev_year }}&month={{ prev_month }}&view={{ view }}" class="btn btn-outline-primary">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                            <h3 class="mb-0">{{ month_name }} {{ year }}</h3>
+                            <a href="/calendar?year={{ next_year }}&month={{ next_month }}&view={{ view }}" class="btn btn-outline-primary">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -66,63 +78,103 @@
                     <div class="table-responsive">
                         <table class="table mb-0">
                             <thead>
-                                <tr style="background-color: #f8f9fa;">
-                                    <th class="text-center py-3">Sun</th>
-                                    <th class="text-center py-3">Mon</th>
-                                    <th class="text-center py-3">Tue</th>
-                                    <th class="text-center py-3">Wed</th>
-                                    <th class="text-center py-3">Thu</th>
-                                    <th class="text-center py-3">Fri</th>
-                                    <th class="text-center py-3">Sat</th>
-                                </tr>
+                                {% if view == 'monthly' %}
+                                    <tr style="background-color: #f8f9fa;">
+                                        <th class="text-center py-3">Sun</th>
+                                        <th class="text-center py-3">Mon</th>
+                                        <th class="text-center py-3">Tue</th>
+                                        <th class="text-center py-3">Wed</th>
+                                        <th class="text-center py-3">Thu</th>
+                                        <th class="text-center py-3">Fri</th>
+                                        <th class="text-center py-3">Sat</th>
+                                    </tr>
+                                {% else %}
+                                    <tr style="background-color: #f8f9fa;">
+                                        {% for d in week_dates %}
+                                            <th class="text-center py-3">{{ d.strftime('%a') }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                {% endif %}
                             </thead>
                             <tbody>
-                                {% for week in calendar_days %}
+                                {% if view == 'monthly' %}
+                                    {% for week in calendar_days %}
+                                        <tr>
+                                            {% for day in week %}
+                                                <td style="height: 120px; vertical-align: top; padding: 8px; border: 1px solid #dee2e6;" 
+                                                    {% if day == today.day and month == today.month and year == today.year %}
+                                                        style="background-color: #fff3cd; height: 120px; vertical-align: top; padding: 8px; border: 2px solid #ffc107;"
+                                                    {% elif day != 0 %}
+                                                        class="bg-light"
+                                                    {% endif %}>
+                                                    {% if day == 0 %}
+                                                        <!-- Empty cell -->
+                                                    {% else %}
+                                                        <div class="mb-2">
+                                                            <strong class="fs-5">{{ day }}</strong>
+                                                            {% if day == today.day and month == today.month and year == today.year %}
+                                                                <span class="badge bg-warning text-dark">Today</span>
+                                                            {% endif %}
+                                                        </div>
+
+                                                        <div style="font-size: 0.85rem;">
+                                                            {% if chores_by_day.get(day) %}
+                                                                {% for entry in chores_by_day.get(day) %}
+                                                                    <div class="mb-1">
+                                                                        {% if entry.completed %}
+                                                                            <span class="badge bg-success chore-completed">
+                                                                                <i class="fas fa-check"></i> {{ entry.chore.name[:12] }}{% if entry.chore.name|length > 12 %}...{% endif %}
+                                                                            </span>
+                                                                        {% else %}
+                                                                            <span class="badge bg-primary">
+                                                                                <i class="fas fa-check-circle"></i> {{ entry.chore.name[:12] }}{% if entry.chore.name|length > 12 %}...{% endif %}
+                                                                            </span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                {% endfor %}
+                                                            {% else %}
+                                                                <span class="text-muted"><i class="fas fa-check"></i> Free</span>
+                                                            {% endif %}
+                                                        </div>
+                                                    {% endif %}
+                                                </td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
                                     <tr>
-                                        {% for day in week %}
-                                            <td style="height: 120px; vertical-align: top; padding: 8px; border: 1px solid #dee2e6;" 
-                                                {% if day == today.day and month == today.month and year == today.year %}
-                                                    style="background-color: #fff3cd; height: 120px; vertical-align: top; padding: 8px; border: 2px solid #ffc107;"
-                                                {% elif day != 0 %}
-                                                    class="bg-light"
-                                                {% endif %}>
-                                                
-                                                {% if day == 0 %}
-                                                    <!-- Empty cell -->
-                                                {% else %}
-                                                    <!-- Day number -->
-                                                    <div class="mb-2">
-                                                        <strong class="fs-5">{{ day }}</strong>
-                                                        {% if day == today.day and month == today.month and year == today.year %}
-                                                            <span class="badge bg-warning text-dark">Today</span>
-                                                        {% endif %}
-                                                    </div>
-                                                    
-                                                    <!-- Chores for this day -->
-                                                    <div style="font-size: 0.85rem;">
-                                                        {% if chores_by_day.get(day) %}
-                                                            {% for entry in chores_by_day.get(day) %}
-                                                                <div class="mb-1">
-                                                                    {% if entry.completed %}
-                                                                        <span class="badge bg-success chore-completed">
-                                                                            <i class="fas fa-check"></i> {{ entry.chore.name[:12] }}{% if entry.chore.name|length > 12 %}...{% endif %}
-                                                                        </span>
-                                                                    {% else %}
-                                                                        <span class="badge bg-primary">
-                                                                            <i class="fas fa-check-circle"></i> {{ entry.chore.name[:12] }}{% if entry.chore.name|length > 12 %}...{% endif %}
-                                                                        </span>
-                                                                    {% endif %}
-                                                                </div>
-                                                            {% endfor %}
-                                                        {% else %}
-                                                            <span class="text-muted"><i class="fas fa-check"></i> Free</span>
-                                                        {% endif %}
-                                                    </div>
-                                                {% endif %}
+                                        {% for d in week_dates %}
+                                            <td style="height: 160px; vertical-align: top; padding: 8px; border: 1px solid #dee2e6;" class="bg-light">
+                                                <div class="mb-2">
+                                                    <strong class="fs-5">{{ d.day }}</strong>
+                                                    {% if d == today.date() %}
+                                                        <span class="badge bg-warning text-dark">Today</span>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div style="font-size: 0.85rem;">
+                                                    {% if chores_by_date.get(d) %}
+                                                        {% for entry in chores_by_date.get(d) %}
+                                                            <div class="mb-1">
+                                                                {% if entry.completed %}
+                                                                    <span class="badge bg-success chore-completed">
+                                                                        <i class="fas fa-check"></i> {{ entry.chore.name[:16] }}{% if entry.chore.name|length > 16 %}...{% endif %}
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span class="badge bg-primary">
+                                                                        <i class="fas fa-check-circle"></i> {{ entry.chore.name[:16] }}{% if entry.chore.name|length > 16 %}...{% endif %}
+                                                                    </span>
+                                                                {% endif %}
+                                                            </div>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <span class="text-muted"><i class="fas fa-check"></i> Free</span>
+                                                    {% endif %}
+                                                </div>
                                             </td>
                                         {% endfor %}
                                     </tr>
-                                {% endfor %}
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>

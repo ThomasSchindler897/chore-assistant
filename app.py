@@ -298,68 +298,126 @@ def calendar():
                 except ValueError:
                     pass
     
-    # Set first day of week to Sunday
+    # Render monthly or weekly view
     calendar_module.setfirstweekday(calendar_module.SUNDAY)
-    
-    # Get calendar with Sunday as first day (no rotation needed)
-    calendar_days = calendar_module.monthcalendar(year, month)
-    
+
     month_name = calendar_module.month_name[month]
-    
-    # Map chores to days
+
     chores_by_day = {}
-    # Preload completions for the month to avoid repeated DB hits
-    import calendar as _cal
-    last_day = _cal.monthrange(year, month)[1]
-    month_start = datetime(year, month, 1)
-    month_end = datetime(year, month, last_day, 23, 59, 59)
+    week_dates = None
+    chores_by_date = None
 
-    month_completions = Completion.query.filter(
-        Completion.completed_at >= month_start,
-        Completion.completed_at <= month_end
-    ).all()
+    if view == 'monthly':
+        # Get calendar with Sunday as first day
+        calendar_days = calendar_module.monthcalendar(year, month)
 
-    # Set of (chore_id, date)
-    completed_on = set((c.chore_id, c.completed_at.date()) for c in month_completions)
+        # Preload completions for the month to avoid repeated DB hits
+        import calendar as _cal
+        last_day = _cal.monthrange(year, month)[1]
+        month_start = datetime(year, month, 1)
+        month_end = datetime(year, month, last_day, 23, 59, 59)
 
-    for day_row in calendar_days:
-        for day in day_row:
-            if day == 0:
-                continue
+        month_completions = Completion.query.filter(
+            Completion.completed_at >= month_start,
+            Completion.completed_at <= month_end
+        ).all()
+
+        # Set of (chore_id, date)
+        completed_on = set((c.chore_id, c.completed_at.date()) for c in month_completions)
+
+        for day_row in calendar_days:
+            for day in day_row:
+                if day == 0:
+                    continue
+                chores_today = []
+                test_date = datetime(year, month, day)
+                test_date_str = test_date.strftime('%A')
+
+                for chore in all_chores:
+                    # IMPORTANT: Only show chores on or after their start_date
+                    if test_date.date() < chore.start_date.date():
+                        continue
+
+                    # Determine if this chore has a completion recorded for this date
+                    is_completed_for_date = (chore.id, test_date.date()) in completed_on
+
+                    # Single date (one-time) chores
+                    if chore.frequency == 'once':
+                        if test_date.date() == chore.start_date.date():
+                            chores_today.append({'chore': chore, 'completed': is_completed_for_date or chore.completed})
+
+                    # Daily chores
+                    elif chore.frequency == 'daily':
+                        chores_today.append({'chore': chore, 'completed': is_completed_for_date})
+
+                    # Weekly chores
+                    elif chore.frequency == 'weekly' and chore.frequency_details:
+                        due_days = [d.strip() for d in chore.frequency_details.split(',')]
+                        if test_date_str in due_days:
+                            chores_today.append({'chore': chore, 'completed': is_completed_for_date})
+
+                    # Monthly chores (ordinal format)
+                    elif chore.frequency == 'monthly' and chore.frequency_details:
+                        if isOrdinalDateMatch(test_date, chore.frequency_details):
+                            chores_today.append({'chore': chore, 'completed': is_completed_for_date})
+
+                chores_by_day[day] = chores_today
+
+    else:
+        # Weekly view: show 7-day window starting from 'start' param or today
+        start_str = request.args.get('start')
+        if start_str:
+            try:
+                start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+            except Exception:
+                start_date = today.date()
+        else:
+            start_date = today.date()
+
+        week_dates = [start_date + timedelta(days=i) for i in range(7)]
+
+        # compute prev/next week start strings for navigation
+        prev_start = week_dates[0] - timedelta(days=7)
+        next_start = week_dates[0] + timedelta(days=7)
+        prev_week_start = prev_start.isoformat()
+        next_week_start = next_start.isoformat()
+
+        week_start_dt = datetime.combine(week_dates[0], datetime.min.time())
+        week_end_dt = datetime.combine(week_dates[-1], datetime.max.time())
+
+        week_completions = Completion.query.filter(
+            Completion.completed_at >= week_start_dt,
+            Completion.completed_at <= week_end_dt
+        ).all()
+
+        completed_on = set((c.chore_id, c.completed_at.date()) for c in week_completions)
+
+        chores_by_date = {}
+        for d in week_dates:
             chores_today = []
-            test_date = datetime(year, month, day)
+            test_date = datetime(d.year, d.month, d.day)
             test_date_str = test_date.strftime('%A')
 
             for chore in all_chores:
-                # IMPORTANT: Only show chores on or after their start_date
                 if test_date.date() < chore.start_date.date():
                     continue
 
-                # Determine if this chore has a completion recorded for this date
                 is_completed_for_date = (chore.id, test_date.date()) in completed_on
 
-                # Single date (one-time) chores
                 if chore.frequency == 'once':
                     if test_date.date() == chore.start_date.date():
-                        # consider completed flag or completion record
                         chores_today.append({'chore': chore, 'completed': is_completed_for_date or chore.completed})
-
-                # Daily chores
                 elif chore.frequency == 'daily':
                     chores_today.append({'chore': chore, 'completed': is_completed_for_date})
-
-                # Weekly chores
                 elif chore.frequency == 'weekly' and chore.frequency_details:
-                    due_days = [d.strip() for d in chore.frequency_details.split(',')]
+                    due_days = [dd.strip() for dd in chore.frequency_details.split(',')]
                     if test_date_str in due_days:
                         chores_today.append({'chore': chore, 'completed': is_completed_for_date})
-
-                # Monthly chores (ordinal format: "1st Friday,4th Saturday")
                 elif chore.frequency == 'monthly' and chore.frequency_details:
                     if isOrdinalDateMatch(test_date, chore.frequency_details):
                         chores_today.append({'chore': chore, 'completed': is_completed_for_date})
 
-            chores_by_day[day] = chores_today
+            chores_by_date[d] = chores_today
 
     # Navigation
     prev_month = month - 1 if month > 1 else 12
@@ -371,15 +429,20 @@ def calendar():
                             year=year,
                             month=month,
                             month_name=month_name,
-                            calendar_days=calendar_days,
+                            calendar_days=locals().get('calendar_days'),
                             chores_by_day=chores_by_day,
+                            week_dates=week_dates,
+                            chores_by_date=chores_by_date,
+                            prev_week_start=locals().get('prev_week_start'),
+                            next_week_start=locals().get('next_week_start'),
                             prev_year=prev_year,
                             prev_month=prev_month,
                             next_year=next_year,
                             next_month=next_month,
                             today=today,
                             overdue_chores=overdue_chores,
-                            upcoming_chores=upcoming_chores)
+                            upcoming_chores=upcoming_chores,
+                            view=view)
 
 if __name__ == '__main__':
     app.run(debug=True)
