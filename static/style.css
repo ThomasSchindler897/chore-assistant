@@ -71,3 +71,10 @@ a {
 a:hover {
     text-decoration: underline;
 }
+
+/* Completed chore styling on calendar */
+.chore-completed {
+    color: #e9f7ef; /* light text on green badge */
+    text-decoration: line-through;
+    opacity: 0.95;
+}

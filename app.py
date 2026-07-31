@@ -308,6 +308,20 @@ def calendar():
     
     # Map chores to days
     chores_by_day = {}
+    # Preload completions for the month to avoid repeated DB hits
+    import calendar as _cal
+    last_day = _cal.monthrange(year, month)[1]
+    month_start = datetime(year, month, 1)
+    month_end = datetime(year, month, last_day, 23, 59, 59)
+
+    month_completions = Completion.query.filter(
+        Completion.completed_at >= month_start,
+        Completion.completed_at <= month_end
+    ).all()
+
+    # Set of (chore_id, date)
+    completed_on = set((c.chore_id, c.completed_at.date()) for c in month_completions)
+
     for day_row in calendar_days:
         for day in day_row:
             if day == 0:
@@ -315,33 +329,36 @@ def calendar():
             chores_today = []
             test_date = datetime(year, month, day)
             test_date_str = test_date.strftime('%A')
-            
+
             for chore in all_chores:
                 # IMPORTANT: Only show chores on or after their start_date
                 if test_date.date() < chore.start_date.date():
                     continue
-                
+
+                # Determine if this chore has a completion recorded for this date
+                is_completed_for_date = (chore.id, test_date.date()) in completed_on
+
                 # Single date (one-time) chores
                 if chore.frequency == 'once':
                     if test_date.date() == chore.start_date.date():
-                        chores_today.append(chore)
-                
+                        # consider completed flag or completion record
+                        chores_today.append({'chore': chore, 'completed': is_completed_for_date or chore.completed})
+
                 # Daily chores
                 elif chore.frequency == 'daily':
-                    chores_today.append(chore)
-                
+                    chores_today.append({'chore': chore, 'completed': is_completed_for_date})
+
                 # Weekly chores
                 elif chore.frequency == 'weekly' and chore.frequency_details:
                     due_days = [d.strip() for d in chore.frequency_details.split(',')]
                     if test_date_str in due_days:
-                        chores_today.append(chore)
-                
-                # Monthly chores
+                        chores_today.append({'chore': chore, 'completed': is_completed_for_date})
+
                 # Monthly chores (ordinal format: "1st Friday,4th Saturday")
                 elif chore.frequency == 'monthly' and chore.frequency_details:
                     if isOrdinalDateMatch(test_date, chore.frequency_details):
-                        chores_today.append(chore)
-            
+                        chores_today.append({'chore': chore, 'completed': is_completed_for_date})
+
             chores_by_day[day] = chores_today
 
     # Navigation
