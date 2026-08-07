@@ -15,6 +15,13 @@ class TestHomeRoute:
         response = client.get('/')
         assert response.status_code == 200
         assert b'Chore Assistant' in response.data or b'chore' in response.data.lower()
+
+    def test_home_includes_virtual_keyboard_assets(self, client):
+        """Home page should include the shared virtual keyboard markup and assets"""
+        response = client.get('/')
+        assert response.status_code == 200
+        assert b'simple-keyboard.css' in response.data
+        assert b'virtual-keyboard' in response.data
     
     def test_home_shows_todays_chores(self, client, session):
         """Home page should show chores due today"""

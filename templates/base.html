@@ -9,6 +9,8 @@
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <!-- Font Awesome Icons (LOCAL) -->
     <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="stylesheet">
+    <!-- Virtual Keyboard Styles -->
+    <link href="{{ url_for('static', filename='css/simple-keyboard.css') }}" rel="stylesheet">
     <!-- Custom App Styles -->
     <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
     
@@ -312,6 +314,13 @@
 
     <!-- Bootstrap JS (LOCAL) -->
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <!-- Simple Keyboard JS (LOCAL) -->
+    <script src="{{ url_for('static', filename='js/simple-keyboard.js') }}"></script>
+
+    <div id="virtual-keyboard-wrapper" class="virtual-keyboard-wrapper" aria-hidden="true">
+        <button type="button" class="keyboard-close-btn" id="keyboardCloseBtn" aria-label="Close keyboard">×</button>
+        <div class="simple-keyboard" id="virtual-keyboard"></div>
+    </div>
 
     <script>
         // Dark Mode Toggle
@@ -335,6 +344,266 @@
                 localStorage.setItem('darkMode', 'disabled');
                 darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const wrapper = document.getElementById('virtual-keyboard-wrapper');
+            const keyboardElement = document.getElementById('virtual-keyboard');
+            const closeButton = document.getElementById('keyboardCloseBtn');
+            let activeInput = null;
+            let shiftActive = false;
+            let capsLockActive = false;
+
+            if (!wrapper || !keyboardElement || !window.SimpleKeyboard) {
+                return;
+            }
+
+            const keyboard = new window.SimpleKeyboard(keyboardElement, {
+                layout: {
+                    default: [
+                        '{caps} 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
+                        'q w e r t y u i o p [ ] \\',
+                        'a s d f g h j k l ; \' {enter}',
+                        '{shift} z x c v b n m , . / {shift}',
+                        '{space}'
+                    ],
+                    shift: [
+                        '{caps} ! @ # $ % ^ & * ( ) _ + {bksp}',
+                        'Q W E R T Y U I O P { } |',
+                        'A S D F G H J K L : " {enter}',
+                        '{shift} Z X C V B N M < > ? {shift}',
+                        '{space}'
+                    ],
+                    caps: [
+                        '{caps} 1 2 3 4 5 6 7 8 9 0 - = {bksp}',
+                        'Q W E R T Y U I O P [ ] \\',
+                        'A S D F G H J K L ; \' {enter}',
+                        '{shift} Z X C V B N M , . / {shift}',
+                        '{space}'
+                    ]
+                },
+                display: {
+                    '{bksp}': '⌫',
+                    '{enter}': 'Enter',
+                    '{shift}': 'Shift',
+                    '{space}': 'Space',
+                    '{caps}': 'Caps'
+                },
+                mergeDisplay: true,
+                physicalKeyboardHighlight: false,
+                onKeyPress: handleKeyPress
+            });
+
+            function getCurrentLayout() {
+                if (capsLockActive && shiftActive) {
+                    return 'default';
+                }
+                if (capsLockActive) {
+                    return 'caps';
+                }
+                return shiftActive ? 'shift' : 'default';
+            }
+
+            function updateLayout() {
+                keyboard.setOptions({ layoutName: getCurrentLayout() });
+            }
+
+            function showKeyboard() {
+                wrapper.classList.add('is-open');
+                wrapper.setAttribute('aria-hidden', 'false');
+                body.classList.add('keyboard-open');
+            }
+
+            function hideKeyboard() {
+                wrapper.classList.remove('is-open');
+                wrapper.setAttribute('aria-hidden', 'true');
+                body.classList.remove('keyboard-open');
+            }
+
+            function insertText(value) {
+                if (!activeInput) {
+                    return;
+                }
+
+                const selectionStart = activeInput.selectionStart ?? activeInput.value.length;
+                const selectionEnd = activeInput.selectionEnd ?? selectionStart;
+                const nextValue = activeInput.value.slice(0, selectionStart) + value + activeInput.value.slice(selectionEnd);
+                activeInput.value = nextValue;
+                const cursorPosition = selectionStart + value.length;
+                activeInput.setSelectionRange(cursorPosition, cursorPosition);
+                activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+                activeInput.focus();
+            }
+
+            function handleBackspace() {
+                if (!activeInput) {
+                    return;
+                }
+
+                const selectionStart = activeInput.selectionStart ?? activeInput.value.length;
+                const selectionEnd = activeInput.selectionEnd ?? selectionStart;
+
+                if (selectionStart === selectionEnd && selectionStart > 0) {
+                    activeInput.value = activeInput.value.slice(0, selectionStart - 1) + activeInput.value.slice(selectionStart);
+                    activeInput.setSelectionRange(selectionStart - 1, selectionStart - 1);
+                } else if (selectionStart !== selectionEnd) {
+                    activeInput.value = activeInput.value.slice(0, selectionStart) + activeInput.value.slice(selectionEnd);
+                    activeInput.setSelectionRange(selectionStart, selectionStart);
+                }
+
+                activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+                activeInput.focus();
+            }
+
+            function handleEnter() {
+                if (!activeInput) {
+                    return;
+                }
+
+                const form = activeInput.form;
+                if (form) {
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
+                }
+
+                hideKeyboard();
+            }
+
+            function handleKeyPress(button) {
+                if (!activeInput) {
+                    return;
+                }
+
+                if (button === '{bksp}') {
+                    handleBackspace();
+                    return;
+                }
+
+                if (button === '{enter}') {
+                    handleEnter();
+                    return;
+                }
+
+                if (button === '{shift}') {
+                    shiftActive = !shiftActive;
+                    updateLayout();
+                    return;
+                }
+
+                if (button === '{caps}') {
+                    capsLockActive = !capsLockActive;
+                    updateLayout();
+                    return;
+                }
+
+                if (button === '{space}') {
+                    insertText(' ');
+                    return;
+                }
+
+                if (button.length === 1) {
+                    const letter = capsLockActive || shiftActive ? button.toUpperCase() : button.toLowerCase();
+                    insertText(letter);
+                    if (!capsLockActive) {
+                        shiftActive = false;
+                    }
+                    updateLayout();
+                }
+            }
+
+            function isTextInput(target) {
+                if (!target) {
+                    return false;
+                }
+
+                if (target.tagName === 'TEXTAREA') {
+                    return true;
+                }
+
+                if (target.tagName !== 'INPUT') {
+                    return false;
+                }
+
+                return !['button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit'].includes(target.type);
+            }
+
+            function prepareInput(target) {
+                if (!isTextInput(target)) {
+                    hideKeyboard();
+                    return;
+                }
+
+                activeInput = target;
+                target.focus({ preventScroll: true });
+                showKeyboard();
+            }
+
+            document.addEventListener('mousedown', function (event) {
+                const clickedInsideKeyboard = event.target.closest('#virtual-keyboard-wrapper');
+                const clickedInput = event.target.closest('input, textarea');
+
+                if (clickedInsideKeyboard) {
+                    event.stopPropagation();
+                    return;
+                }
+
+                if (clickedInput) {
+                    prepareInput(clickedInput);
+                    event.stopPropagation();
+                    return;
+                }
+
+                hideKeyboard();
+            });
+
+            document.addEventListener('touchstart', function (event) {
+                const clickedInsideKeyboard = event.target.closest('#virtual-keyboard-wrapper');
+                const clickedInput = event.target.closest('input, textarea');
+
+                if (clickedInsideKeyboard) {
+                    event.stopPropagation();
+                    return;
+                }
+
+                if (clickedInput) {
+                    prepareInput(clickedInput);
+                    event.stopPropagation();
+                    return;
+                }
+
+                hideKeyboard();
+            }, { passive: true });
+
+            document.addEventListener('focusin', function (event) {
+                if (isTextInput(event.target)) {
+                    prepareInput(event.target);
+                }
+            });
+
+            document.addEventListener('click', function (event) {
+                if (event.target.closest('#virtual-keyboard-wrapper')) {
+                    return;
+                }
+
+                if (event.target.closest('input, textarea')) {
+                    return;
+                }
+
+                hideKeyboard();
+            });
+
+            closeButton.addEventListener('click', function (event) {
+                event.stopPropagation();
+                hideKeyboard();
+                if (activeInput && document.contains(activeInput)) {
+                    activeInput.blur();
+                }
+            });
+
+            updateLayout();
         });
     </script>
 </body>
