@@ -318,3 +318,16 @@ body.keyboard-open {
         padding-bottom: 11rem;
     }
 }
+
+/* Header contrast for light and dark mode */
+body:not(.dark-mode) h1,
+body:not(.dark-mode) h2,
+body:not(.dark-mode) h3 {
+    color: #333 !important;
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3 {
+    color: #e0e0e0 !important;
+}
