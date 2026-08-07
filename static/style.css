@@ -47,6 +47,24 @@ h1 {
     margin-bottom: 20px;
 }
 
+h2 {
+    color: #333;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    margin-top: 1rem;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 0.5rem;
+}
+
+h3 {
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+}
+
 p {
     color: #666;
     line-height: 1.6;
@@ -97,12 +115,23 @@ nav a, .navbar-nav .nav-link {
     border-radius: 18px;
 }
 
+.card-header {
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
 .card-body {
     padding: 1.5rem;
 }
 
 .table th, .table td {
     padding: 1rem !important;
+}
+
+table thead th {
+    color: #333 !important;
+    background-color: #f9f9f9;
 }
 
 /* Completed chore styling on calendar */
@@ -140,4 +169,20 @@ nav a, .navbar-nav .nav-link {
     color: #0b1220 !important;
     border-color: #c7d2fe !important;
     box-shadow: 0 6px 14px rgba(102,126,234,0.08);
+}
+
+/* Dark mode support */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3 {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode h2 {
+    border-bottom: 2px solid #764ba2;
+}
+
+body.dark-mode table thead th {
+    color: #e0e0e0 !important;
+    background-color: #2a2a2a;
 }
